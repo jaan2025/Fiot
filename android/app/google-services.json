@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "321036487063",
+    "project_id": "raxiotsensor",
+    "storage_bucket": "raxiotsensor.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:321036487063:android:ec3917e79729cdf555dcd2",
+        "android_client_info": {
+          "package_name": "com.generic.iotsensor.generic_iot_sensor"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "321036487063-dcplrhfdsggedvaq80kqd1c0vto4fpqo.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCEV-3nNKy3oI5AYjSXhDuMm-nXBAmwCek"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "321036487063-dcplrhfdsggedvaq80kqd1c0vto4fpqo.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
