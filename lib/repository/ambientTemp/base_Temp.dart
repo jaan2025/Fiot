@@ -2,11 +2,12 @@
 
 
 
+import '../../model/WeatherApiModel.dart';
 import '../../model/location_model.dart';
 
 abstract class baseTemp{
 
-  Future<MyLocationModel?> getTemp() async {
+  Future<weatherModel?> getTemp() async {
 
   }
 }

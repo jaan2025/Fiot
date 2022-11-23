@@ -13,7 +13,13 @@ class EditLocation extends ConsumerStatefulWidget {
   _EditLocationState createState() => _EditLocationState();
 }
 
+
+
+
 class _EditLocationState extends ConsumerState<EditLocation> {
+
+  List<UserEdDevice> ? edDeviceList = [];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -39,7 +45,7 @@ class _EditLocationState extends ConsumerState<EditLocation> {
               scrollDirection: Axis.vertical,
                 itemCount: Helper.location.length,
                 itemBuilder: (context,index){
-              return location(index, data.data!.locations![index]);
+              return location(index, data.data!.locations![index],data.data!.units!);
             })
           ],
         );
@@ -55,7 +61,7 @@ class _EditLocationState extends ConsumerState<EditLocation> {
     );
   }
 
-  location(int index, UserLocation location){
+  location(int index, UserLocation location,List<UserUnit> list){
     return  Card(
       child: Column(
         children: [
@@ -72,7 +78,10 @@ class _EditLocationState extends ConsumerState<EditLocation> {
                           ? "assets/images/office-building.png"
                           : "assets/images/house.png"))),
               Text(location.locationName.toString()),
-              IconButton(onPressed: (){}, icon: Icon(Icons.delete))
+              IconButton(onPressed: (){
+                deleteLocation(location, list);
+
+              }, icon: Icon(Icons.delete))
             ],
           )
         ],
@@ -80,4 +89,21 @@ class _EditLocationState extends ConsumerState<EditLocation> {
     );
 
   }
+
+  void deleteLocation(UserLocation location,List<UserUnit> list){
+    print("Entering...");
+    for (var unit in list) {
+      print("loading...");
+      for (var ed in unit.edDevice!) {
+        if (location.locationId == ed.locationId) {
+          print("Clearing...");
+          location.isactive = null;
+        } else {
+          // edDeviceList!.remove(ed);
+        }
+      }
+    }
+
+  }
+
 }

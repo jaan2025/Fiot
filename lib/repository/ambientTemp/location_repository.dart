@@ -9,23 +9,31 @@ class LocationRep extends baseTemp {
 
 final client = Dio();
 
-  Future<dynamic> getWeather(var lat, var loc) async {
-    String formUrl = 'https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$loc&hourly=temperature_2m';
-    final url = formUrl.toString();
+Future<dynamic> getWeatherApi(var lat,var long) async {
+  String formUrl = 'https://api.darksky.net/forecast/8f05b9be093e0cbfcd6d645a5eb8a0af/$lat,$long?units=si&callback=?';
+  final url = formUrl.toString();
+  try{
+    final response = await client.get(url);
+    print("WEATHER ==== > ${response.data}");
+    //final response2 = [response.data];
+   var merry =  response.data.toString().replaceAll("/**/ typeof  === 'function' && (", "");
+   var robin = merry.replaceAll(")", "");
+   var res = robin.replaceAll(";", "");
 
-    try {
-      final response = await client.get(
-          url);
 
-      if (response.statusCode == 200) {
-        return response.data;
-      } else {
-        return response.data;
-      }
-    } catch (error) {
-      print(error);
+    print("RES --------- $res");
+    if (res != null) {
+      return res;
+
+    } else {
+      return res;
     }
+  }catch(e){
+    print(e);
   }
+
+
+}
 
 
 }

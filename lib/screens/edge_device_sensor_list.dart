@@ -52,6 +52,8 @@ class _EdgeDeviceSensorListState extends ConsumerState<EdgeDeviceSensorList> {
 
 
 
+
+
   @override
   void deactivate() {
     stopTimer();
@@ -64,9 +66,10 @@ class _EdgeDeviceSensorListState extends ConsumerState<EdgeDeviceSensorList> {
       countdownTimer!.cancel();
     }
   }
-  itemSensorLiveData(Livedatum livedata, List<UserSensor>? sensors, ) {
+  itemSensorLiveData(Livedatum livedata, List<UserSensor>? sensors, UserEdDevice? edDevice ) {
 
     String sensorId = '',sensorImage = '';
+
     int index = 0;
     for(int i=0; i<sensors!.length; i++){
       if(livedata.sensorId == sensors[i].sensorId!){
@@ -101,7 +104,7 @@ class _EdgeDeviceSensorListState extends ConsumerState<EdgeDeviceSensorList> {
               child:Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                 /* Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(livedata.sensorName.toString()),
@@ -115,7 +118,7 @@ class _EdgeDeviceSensorListState extends ConsumerState<EdgeDeviceSensorList> {
                             shape: BoxShape.circle),
                       ),
                     ],
-                  ),
+                  ),*/
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -167,6 +170,13 @@ class _EdgeDeviceSensorListState extends ConsumerState<EdgeDeviceSensorList> {
 
   @override
   Widget build(BuildContext context) {
+    Duration diff = DateTime.now().difference(DateTime.now());
+
+    if(widget.edDevice!.sensors![0].date != "")
+    {
+      diff = DateTime.parse(widget.edDevice!.sensors![0].date +" "+widget.edDevice!.sensors![0].time).difference(DateTime.now());
+    }
+
     return SafeArea(
         child: Scaffold(
             backgroundColor: AppColors.cream,
@@ -185,7 +195,7 @@ class _EdgeDeviceSensorListState extends ConsumerState<EdgeDeviceSensorList> {
                 return Column(
                   children: [
                     Expanded(
-                        flex: 5,
+                        flex: 8,
                         child: Column(
                           children: [
                             Row(
@@ -207,7 +217,17 @@ class _EdgeDeviceSensorListState extends ConsumerState<EdgeDeviceSensorList> {
                                       fontSize:
                                           MediaQuery.of(context).size.width *
                                               0.05),
-                                )
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 40),
+                                  child: SizedBox(
+                                    width: 150,
+                                    height: 80,
+                                    child: Image(
+                                        image: AssetImage(
+                                            "assets/images/logo.png")),
+                                  ),
+                                ),
                               ],
                             ),
                             Row(
@@ -346,6 +366,11 @@ class _EdgeDeviceSensorListState extends ConsumerState<EdgeDeviceSensorList> {
                                                fontWeight: FontWeight.normal,
                                                color: Color(0xfff808080)),
                                          ),
+                                         Text(",${widget.edDevice?.sensors![0].time}",
+                                           style: const TextStyle(
+                                               fontWeight: FontWeight.normal,
+                                               color: Color(0xfff808080)),
+                                         ),
 
                                        ],
                                      ),
@@ -363,13 +388,68 @@ class _EdgeDeviceSensorListState extends ConsumerState<EdgeDeviceSensorList> {
                                       ],
                                     ),*/
                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 5.0),
+                                      child: Row(
+
+                                        children: [
+                                          Text("LIVE DATA STATE ",
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.bold),
+                                          ),
+
+
+                                        ],
+                                      ),
+                                    ),
+
                                     Row(
                                       children: [
-                                        Text("${widget.edDevice?.sensors![0].time}",
+                                        Padding(
+                                          padding: const EdgeInsets.only(top: 5.0),
+                                          child: Row(
+                                            children: [
+
+                                              diff.inMinutes > -10 ?
+                                              Text("ACTIVE",
+                                                style: const TextStyle(
+                                                    fontWeight: FontWeight.normal,
+                                                    color: Color(0xfff808080)),
+                                              ): Text("INACTIVE",
+                                                    style: const TextStyle(
+                                                    fontWeight: FontWeight.normal,
+                                                    color: Color(0xfff808080)),
+
+                                              ),
+                                            Padding(
+                                              padding: const EdgeInsets.only(left: 10,bottom: 5),
+                                              child: Container(
+                                                  width: 8,
+                                                  height: 8,
+                                                  decoration:  BoxDecoration(
+                                                      color:
+                                                      diff.inMinutes > -10 ?Colors.green:Colors.red,
+
+                                                      shape: BoxShape.circle),
+                                                ),
+                                            ),
+                                            ],
+                                          ),
+
+
+                                          /* Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                      children: [
+                                        Text("Time :",
                                           style: const TextStyle(
-                                              fontWeight: FontWeight.normal,
-                                              color: Color(0xfff808080)),
+                                              fontWeight: FontWeight.bold),
                                         ),
+
+
+                                      ],
+                                    ),*/
+                                        ),
+
                                       ],
                                     )
                                   ],
@@ -379,20 +459,26 @@ class _EdgeDeviceSensorListState extends ConsumerState<EdgeDeviceSensorList> {
                                   child:   Column(
                                     mainAxisAlignment: MainAxisAlignment.start,
                                     children: [
-                                      SizedBox(
-                                        width: 150,
-                                        height: 80,
-                                        child: Image(
-                                            image: AssetImage(
-                                                "assets/images/logo_app.jpeg")),
-                                      ),
-                                      SizedBox(
-                                        width: 150,
-                                        height: 100,
-                                        child: Image(
-                                            image: AssetImage('assets/images/smart.png'))),
 
-                                    ],
+                                   (widget.edDevice!.productCode!.contains("RT-THAPS")) ?
+                                   (widget.edDevice!.productCode!.contains("RT-AMP")) ?
+                                      SizedBox(
+                                        width: 210,
+                                        height: 190,
+                                        child: Image(
+                                            image: AssetImage('assets/images/Amp.webp'))) :   SizedBox(
+                                       width: 210,
+                                       height: 190,
+                                         child: Image(
+                                             image: AssetImage('assets/images/Thaps.png'))): SizedBox(
+                                       width: 150,
+                                       height: 150,
+                                       child: Image(
+                                           image: AssetImage('assets/images/smart.png')))
+
+
+                ],
+
                                   ),),
                               ],
                             ),
@@ -434,7 +520,7 @@ class _EdgeDeviceSensorListState extends ConsumerState<EdgeDeviceSensorList> {
                           itemCount: livedata!.length,
                           itemBuilder: (BuildContext ctx, index) {
                             return itemSensorLiveData(
-                                livedata![index], widget.edDevice!.sensors);
+                                livedata![index], widget.edDevice!.sensors,widget.edDevice!);
                           }),
                     )
                   ],

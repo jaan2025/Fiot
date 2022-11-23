@@ -79,12 +79,18 @@ class _LoginState extends ConsumerState<Login> {
   String toastlabel="";
 
   mobileUi(BuildContext context) {
+
+    final mediaQuery = MediaQuery.maybeOf(context)!.size;
+
+    MediaQueryData deviceInfo = MediaQuery.of(context);
     return SafeArea(
         child: Scaffold(
+
             backgroundColor: AppColors.white,
             body: SingleChildScrollView(
               child: Consumer(builder: (context, ref, child) {
                 return SizedBox(
+
                   height: ScreenSize.safeBlockVertical * 100,
                   child: Stack(
                     alignment: Alignment.topRight,

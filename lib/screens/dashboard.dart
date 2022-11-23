@@ -17,6 +17,7 @@ import 'package:generic_iot_sensor/BLoC/channel/ChannelBloc.dart';
 import 'package:generic_iot_sensor/model/user_devicess/user_devies_model.dart';
 import 'package:generic_iot_sensor/provider/edgedevice_provider/addedgedevice_provider.dart';
 import 'package:generic_iot_sensor/repository/channelRepository/channel_repository.dart';
+import 'package:generic_iot_sensor/res/id.dart';
 import 'package:generic_iot_sensor/screens/shimmerprojectlist.dart';
 import 'package:toggle_switch/toggle_switch.dart';
 
@@ -35,6 +36,7 @@ import '../provider/user_management_provider/device_status_provider.dart';
 import '../provider/user_management_provider/live_data_provider.dart';
 import '../provider/user_management_provider/loginnotifier.dart';
 
+import '../provider/user_management_provider/userprofileprovider.dart';
 import '../repository/ambientTemp/location_repository.dart';
 import '../repository/geolocation/geolocation_repository.dart';
 import '../res/colors.dart';
@@ -46,6 +48,7 @@ import 'package:mqtt_client/mqtt_server_client.dart';
 
 import 'location_list_devices.dart';
 import 'package:intl/intl.dart';
+
 
 //Provider<Dashboard> apiProvider = Provider<Dashboard>((ref) => Dashboard());
 
@@ -64,7 +67,7 @@ List<ListEdMac> newList1=[];
 // edited by silambarasan
 
 class Dashboard extends ConsumerStatefulWidget {
- // final Ref ref;
+
 
 
   Map? valueMap;
@@ -72,32 +75,39 @@ class Dashboard extends ConsumerStatefulWidget {
 
   @override
   _DashboardState createState() => _DashboardState();
+
+
 }
 
 class _DashboardState extends ConsumerState<Dashboard> {
-  var permissionLocation = false, permissionStorage = false;
+  var permissionLocation = false,
+      permissionStorage = false;
   bool? isActiveLocation = true;
   TextEditingController _locationnamecontroller = TextEditingController();
   TextEditingController _edittextcontroller = TextEditingController();
-  String userName = "test", emailAddress = "test";
+  String userName = "test",
+      emailAddress = "test";
   List<UserEdDevice> edDevice = [];
   List<UserEdDevice> ? edDeviceList = [];
+  List<UserLocation> ? loc = [];
+  UserDeviceList ? DEVlIST;
   List<String> ? MqttTopicList = [];
   Timer? countdownTimer;
   Duration myDuration = const Duration(seconds: 20);
-  bool ChangedToggle =  false;
-
-
-
+  bool ChangedToggle = false;
 
 
   @override
   void initState() {
-   // ref.read(userDataNotifier(Helper.userIDValue));
+
     print("user" + Helper.userIDValue);
     initializeMQTTClient();
-   /// connect();
+
+
+
+   // connect();
     super.initState();
+
   }
 
   @override
@@ -115,7 +125,6 @@ class _DashboardState extends ConsumerState<Dashboard> {
 
   bool THAP = false;
   bool SINGLETHREE = false;
-
 
 
   //select for date
@@ -154,8 +163,6 @@ class _DashboardState extends ConsumerState<Dashboard> {
     if (_selectedDate == null) {
       return 'select date';
     } else {
-
-
       return DateFormat('MMM d, yyyy').format(_selectedDate);
     }
   }
@@ -181,16 +188,19 @@ class _DashboardState extends ConsumerState<Dashboard> {
       edgeId = '',
       productCode = '',
       serialNo = '',
-      locationId='';
+      locationId = '';
   List<Livedatum>? livedata = [];
 
   String statusText = "";
   bool isConnected = false;
 
-  final  _client = MqttServerClient("a1i25lg7rvcymv-ats.iot.us-east-1.amazonaws.com", "");
+  final _client = MqttServerClient(
+      "a1i25lg7rvcymv-ats.iot.us-east-1.amazonaws.com", "");
   TextEditingController uniqueIdController = TextEditingController();
 
   var Mqtt = "";
+  int onceMqtt = 0;
+
 
   @override
   Widget build(BuildContext context) {
@@ -207,7 +217,8 @@ class _DashboardState extends ConsumerState<Dashboard> {
         child: MultiBlocProvider(
             providers: [
               BlocProvider<GeolocatioBloc>(
-                create: (BuildContext context) => GeolocatioBloc(
+                create: (BuildContext context) =>
+                GeolocatioBloc(
                     geoLocationRepository:
                     context.read<GeoLocationRepository>())
                   ..add(LoadGeolocation()),
@@ -227,12 +238,18 @@ class _DashboardState extends ConsumerState<Dashboard> {
                     backgroundColor: AppColors.white,
                     body: ref.watch(userDataNotifier(Helper.userIDValue)).when(
                         data: (data) {
-                         // connect();
-                          print("IN DASHBOARD ====== >${Helper.location.length}");
+                          // connect();
+                          print(
+                              "IN DASHBOARD ====== >${Helper.location.length}");
+                          if(onceMqtt == 0){
+                            MqttTopics(data.data!.units!);
+                            onceMqtt++;
+                          }
 
-                          MqttTopics(data.data!.units!);
-                          print("UNITS =========== ${data.data!.units?.length}");
-                          var unitsdata=data.data!.units!;
+
+                          print(
+                              "UNITS =========== ${data.data!.units?.length}");
+                          var unitsdata = data.data!.units!;
                           print("unitsdata =========== ${unitsdata.length}");
                           Helper.listOfMac.clear();
                           Helper.location.clear();
@@ -249,16 +266,17 @@ class _DashboardState extends ConsumerState<Dashboard> {
 
                             for (var loc in data.data!.locations!) {
                               Helper.location
-                                  .add('${loc.locationId!}-${loc.locationName}');
+                                  .add(
+                                  '${loc.locationId!}-${loc.locationName}');
                             }
                             for (var mac in data.data!.units!) {
-
                               for (var ed in mac.edDevice!) {
                                 edDevice.add(ed);
                               }
                               Helper.listOfMac.add(mac.macId!);
                             }
                             Helper.mUnit = data.data!.units!;
+
                           }
                           return /*data.data == null ? CircularProgressIndicator() :*/ SingleChildScrollView(
                             child: Padding(
@@ -274,9 +292,22 @@ class _DashboardState extends ConsumerState<Dashboard> {
                                         style: TextStyle(
                                             fontWeight: FontWeight.bold,
                                             fontSize:
-                                            MediaQuery.of(context).size.width *
+                                            MediaQuery
+                                                .of(context)
+                                                .size
+                                                .width *
                                                 0.05),
                                       ),
+                                    /*  Padding(
+                                        padding: const EdgeInsets.only(left: 20),
+                                        child: SizedBox(
+                                          width: 150,
+                                          height: 80,
+                                          child: Image(
+                                              image: AssetImage(
+                                                  "assets/images/logo.png")),
+                                        ),
+                                      ),*/
                                       InkWell(
                                         onTap: () {
                                           locationPopUp();
@@ -286,7 +317,7 @@ class _DashboardState extends ConsumerState<Dashboard> {
                                             height: 40,
                                             child: Image(
                                                 image: AssetImage(
-                                                    'assets/images/add_location.png'))),
+                                                    'assets/images/location.gif'))),
                                       ),
                                     ],
                                   ),
@@ -294,140 +325,167 @@ class _DashboardState extends ConsumerState<Dashboard> {
                                     padding: const EdgeInsets.only(top: 5.0),
                                     child: Row(
                                       children: [
-                                        Consumer(builder: (context, ref, child) {
-                                          return Expanded(
-                                            child: SizedBox(
-                                              height:
-                                              ScreenSize.screenHeight * 0.26,
-                                              child: Card(
-                                                shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                    BorderRadius.circular(
-                                                        50.0)),
-                                                elevation: 10.0,
-                                                child: Container(
-                                                  width: 300.0,
-                                                  height: 400.0,
-                                                  child: Stack(
-                                                    alignment:
-                                                    Alignment.bottomCenter,
-                                                    children: [
-                                                      // This will hold the Image in the back ground:
-                                                      Container(
-                                                        decoration: BoxDecoration(
-                                                            borderRadius:
-                                                            BorderRadius
-                                                                .circular(50.0),
-                                                            color:
-                                                            Color(0xfffE2F3FD)),
-                                                      ),
-                                                      Positioned(
-                                                          width: 100,
-                                                          height:100,
-                                                          bottom: 80,
-                                                          right: 20,
-                                                          child: Image(
+                                        Consumer(
+                                            builder: (context, ref, child) {
+                                              return Expanded(
+                                                child: SizedBox(
+                                                  height:
+                                                  ScreenSize.screenHeight *
+                                                      0.26,
+                                                  child: Card(
+                                                    shape: RoundedRectangleBorder(
+                                                        borderRadius:
+                                                        BorderRadius.circular(
+                                                            50.0)),
+                                                    elevation: 10.0,
+                                                    child: Container(
+                                                      width: 300.0,
+                                                      height: 400.0,
+                                                      child: Stack(
+                                                        alignment:
+                                                        Alignment.bottomCenter,
+                                                        children: [
+                                                          // This will hold the Image in the back ground:
+                                                          Container(
+                                                            decoration: BoxDecoration(
+                                                                borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                    50.0),
+                                                                color:
+                                                                Color(
+                                                                    0xfffE2F3FD)),
+                                                          ),
+                                                          Positioned(
+                                                              width: 100,
+                                                              height: 100,
+                                                              bottom: 80,
+                                                              right: 20,
+                                                              child: Image(
 
-                                                              image:  getTime(_selectedTime).contains("AM")  ? const AssetImage(
-                                                                  "assets/images/robot.png"): const AssetImage("assets/images/could.png") )),
-                                                      // This is the Custom Shape Container
+                                                                  image: getTime(
+                                                                      _selectedTime)
+                                                                      .contains(
+                                                                      "AM")
+                                                                      ? const AssetImage(
+                                                                      "assets/images/robot.png")
+                                                                      : const AssetImage(
+                                                                      "assets/images/could.png"))),
+                                                          // This is the Custom Shape Container
 
 
-                                                      const Positioned(
-                                                          bottom: 150,
-                                                          left: 40,
-                                                          child: Icon(
-                                                              Icons.location_on)),
-                                                      // This Holds the Widgets Inside the the custom Container;
-                                                      Positioned(
-                                                          bottom: 150,
-                                                          left: 70,
-                                                          child: BlocBuilder<
-                                                              GeolocatioBloc,
-                                                              GeolocationState>(
-                                                              builder:
-                                                                  (context, state) {
-                                                                if (state
-                                                                is GeolocationLoading) {
-                                                                  return const Text(
-                                                                      "Please wait.....");
-                                                                } else if (state
-                                                                is GeolocationLoaded) {
-                                                                  print(state.address
-                                                                      .subLocality
-                                                                      .toString());
-                                                                  return Text(
-                                                                    state.address
-                                                                        .subLocality
-                                                                        .toString(),
-                                                                    style:
-                                                                    const TextStyle(
-                                                                        fontSize:
-                                                                        12),
-                                                                  );
-                                                                } else {
-                                                                  print("stupid");
-                                                                }
-                                                                return CircularProgressIndicator();
-                                                              })),
+                                                          const Positioned(
+                                                              bottom: 150,
+                                                              left: 40,
+                                                              child: Icon(
+                                                                  Icons
+                                                                      .location_on)),
+                                                          // This Holds the Widgets Inside the the custom Container;
+                                                          Positioned(
+                                                              bottom: 150,
+                                                              left: 70,
+                                                              child: BlocBuilder<
+                                                                  GeolocatioBloc,
+                                                                  GeolocationState>(
+                                                                  builder:
+                                                                      (context,
+                                                                      state) {
+                                                                    if (state
+                                                                    is GeolocationLoading) {
+                                                                      return const Text(
+                                                                          "Please wait.....");
+                                                                    } else
+                                                                    if (state
+                                                                    is GeolocationLoaded) {
+                                                                      print(
+                                                                          state
+                                                                              .address
+                                                                              .subLocality
+                                                                              .toString());
+                                                                      return Text(
+                                                                        state
+                                                                            .address
+                                                                            .subLocality
+                                                                            .toString(),
+                                                                        style:
+                                                                        const TextStyle(
+                                                                            fontSize:
+                                                                            12),
+                                                                      );
+                                                                    } else {
+                                                                      print(
+                                                                          "stupid");
+                                                                    }
+                                                                    return CircularProgressIndicator();
+                                                                  })),
 
-                                                      Positioned(
-                                                          bottom: 60,
-                                                          left: 20,
-                                                          child: BlocBuilder<
-                                                              weatherBloc,
-                                                              blocState>(
-                                                              builder:
-                                                                  (context, state) {
-                                                                if (state
-                                                                is weatherLoading) {
-                                                                  return CircularProgressIndicator();
-                                                                } else if (state
-                                                                is weatherLoaded) {
-                                                                  return Text(
-                                                                    state
-                                                                        .myLocationModel
-                                                                        .hourly!
-                                                                        .temperature2M!
-                                                                        .isNotEmpty
-                                                                        ? " ${state.myLocationModel.hourly!.temperature2M![0].toString()}"
-                                                                        : "NO DATA",
-                                                                    style: const TextStyle(
-                                                                        fontSize: 50,
-                                                                        fontWeight:
-                                                                        FontWeight
-                                                                            .bold),
-                                                                  );
-                                                                }
-                                                                return const CircularProgressIndicator();
-                                                              })),
-                                                      const Positioned(
-                                                          bottom: 100,
-                                                          left: 140,
-                                                          child: Text("\u{00B0}C")),
+                                                          Positioned(
+                                                              bottom: 60,
+                                                              left: 50,
+                                                              child: BlocBuilder<
+                                                                  weatherBloc,
+                                                                  blocState>(
+                                                                  builder:
+                                                                      (context,
+                                                                      state) {
+                                                                    if (state
+                                                                    is weatherLoading) {
+                                                                      return CircularProgressIndicator();
+                                                                    } else
+                                                                    if (state
+                                                                    is weatherLoaded) {
 
-                                                      Positioned(
-                                                          bottom: 20,
-                                                          right: 30,
-                                                          child: Text(getDate())),
-                                                      const Positioned(
-                                                          bottom: 50,
-                                                          right: 60,
-                                                          child: Icon(
+                                                                      return Text(
+                                                                        state
+                                                                            .myLocationModel
+                                                                            .currently!.temperature != null
 
-                                                            Icons
-                                                                .calendar_month,size: 15,)),
-                                                      const Positioned(
-                                                          bottom: 50,
-                                                          left: 60,
-                                                          child: Icon(Icons
-                                                              .access_time_outlined,size: 15, )),
-                                                      Positioned(
-                                                          bottom: 20,
-                                                          left: 50,
-                                                          child: Text(getTime(
-                                                              _selectedTime))),
-                                                      /*       Positioned(
+                                                                            ? " ${state
+                                                                            .myLocationModel
+                                                                            .currently!.temperature!
+                                                                            .round().toString()}"
+                                                                            : "NO DATA",
+                                                                        style: const TextStyle(
+                                                                            fontSize: 50,
+                                                                            fontWeight:
+                                                                            FontWeight
+                                                                                .bold),
+                                                                      );
+                                                                    }
+                                                                    return const CircularProgressIndicator();
+                                                                  })),
+                                                          const Positioned(
+                                                              bottom: 100,
+                                                              left: 130,
+                                                              child: Text(
+                                                                  "\u{00B0}C")),
+
+                                                          Positioned(
+                                                              bottom: 20,
+                                                              right: 30,
+                                                              child: Text(
+                                                                  getDate())),
+                                                          const Positioned(
+                                                              bottom: 50,
+                                                              right: 60,
+                                                              child: Icon(
+
+                                                                Icons
+                                                                    .calendar_month,
+                                                                size: 15,)),
+                                                          const Positioned(
+                                                              bottom: 50,
+                                                              left: 60,
+                                                              child: Icon(Icons
+                                                                  .access_time_outlined,
+                                                                size: 15,)),
+                                                          Positioned(
+                                                              bottom: 20,
+                                                              left: 50,
+                                                              child: Text(
+                                                                  getTime(
+                                                                      _selectedTime))),
+                                                          /*       Positioned(
                                                               child: BlocBuilder<ChannelBloc,channelState>(builder: (context,state){
                                                             if(state is channelLoading){
                                                               print("object");
@@ -438,13 +496,13 @@ class _DashboardState extends ConsumerState<Dashboard> {
                                                           }))
 
 */
-                                                    ],
+                                                        ],
+                                                      ),
+                                                    ),
                                                   ),
                                                 ),
-                                              ),
-                                            ),
-                                          );
-                                        }),
+                                              );
+                                            }),
                                       ],
                                     ),
                                   ),
@@ -454,12 +512,15 @@ class _DashboardState extends ConsumerState<Dashboard> {
                                       shrinkWrap: true,
                                       scrollDirection: Axis.vertical,
                                       physics: ScrollPhysics(),
-                                      itemCount: data.data!.locations!.isNotEmpty
+                                      itemCount: data.data!.locations!
+                                          .isNotEmpty
                                           ? data.data!.locations!.length
                                           : 0,
                                       itemBuilder: (context, index) {
-                                        print("Location Index -----${data.data!.locations![index].locationId}");
-                                        print("uNITS LENGTH -----${unitsdata.length}");
+                                        print("Location Index -----${data.data!
+                                            .locations![index].locationId}");
+                                        print("uNITS LENGTH -----${unitsdata
+                                            .length}");
 
                                         return itemBuilderLocation(
                                             index,
@@ -477,53 +538,58 @@ class _DashboardState extends ConsumerState<Dashboard> {
                         child: Text(e.toString()),
                       );
                     }, loading: () {
-                      return ShimmerForProjectList();
+                      return  ShimmerForProjectList();/*SplashScreen(
+                        seconds: 6,
+                        navigateAfterSeconds: AppId.DashboardID,
+                        image: new Image.asset("assets/images/logo.png"),
+                        loadingText: Text("Loading"),
+                        photoSize: 100.0,
+                        loaderColor: Colors.blue,
+                      );*/
                     })))));
   }
 
-  MqttTopics(List<UserUnit> list)
-  {
-
+  MqttTopics(List<UserUnit> list) {
     for (var unit in list) {
       for (var ed in unit.edDevice!) {
-        if (ed.edgeDeviceId == "09"|| ed.edgeDeviceId == "10") {
+        if (ed.edgeDeviceId == "9" || ed.edgeDeviceId == "10") {
           MqttTopicList!.add(ed.macId.toString());
+          print(ed.macId.toString());
         }
       }
     }
     disconnect();
     connect(MqttTopicList!);
-
   }
 
 
 // inside card contain value
-  itemBuilderEdgeDevice(int index, UserEdDevice edDevice, ) {
-
-    TextEditingController _labelController = TextEditingController(text: edDevice.name.toString());
+  itemBuilderEdgeDevice(int index, UserEdDevice edDevice,) {
+    TextEditingController _labelController = TextEditingController(
+        text: edDevice.name.toString());
     selectedDevice = edDevice.edgeDeviceId!;
 
     // if(edDevice.edgeDeviceId == "10" || edDevice.edgeDeviceId == "9"){
 
     ListEdMac ss = new ListEdMac();
-    ss.edMac=edDevice.macId!.toUpperCase();
-    ss.channel1=false;
-    ss.channel2=false;
-    ss.channel3=false;
-    ss.Name= edDevice.name;
+    ss.edMac = edDevice.macId!.toUpperCase();
+    ss.channel1 = false;
+    ss.channel2 = false;
+    ss.channel3 = false;
+    ss.Name = edDevice.name;
     newList.add(ss);
 
-    var Listed1 = newList.indexWhere((ListEdMac)=> ListEdMac.edMac == edDevice.macId.toString());
+    var Listed1 = newList.indexWhere((ListEdMac) =>
+    ListEdMac.edMac == edDevice.macId.toString());
 
 
     Duration diff = DateTime.now().difference(DateTime.now());
 
-    if(edDevice.sensors![0].date != "")
-    {
-        diff = DateTime.parse(edDevice.sensors![0].date +" "+edDevice.sensors![0].time).difference(DateTime.now());
+    if (edDevice.sensors![0].date != "") {
+      diff = DateTime.parse(
+          edDevice.sensors![0].date + " " + edDevice.sensors![0].time)
+          .difference(DateTime.now());
     }
-
-
 
 
     //   print(newList[i].edMac);
@@ -538,9 +604,12 @@ class _DashboardState extends ConsumerState<Dashboard> {
     //
     // newList1.add(ss1);
 
-    return InkWell(
+    return Visibility(
+        visible: edDevice.isactive != null ? true : false,
+        child: InkWell(
       onTap: () {
-        var Listed1 = newList.indexWhere((ListEdMac)=> ListEdMac.edMac == edDevice.macId.toString());
+        var Listed1 = newList.indexWhere((ListEdMac) =>
+        ListEdMac.edMac == edDevice.macId.toString());
         ref.refresh(liveDataNotifier.notifier);
 
 
@@ -555,16 +624,13 @@ class _DashboardState extends ConsumerState<Dashboard> {
         });
 
 
-
-        if(edDevice.edgeDeviceId != "9" && edDevice.edgeDeviceId != "10"){
+        if (edDevice.edgeDeviceId != "9" && edDevice.edgeDeviceId != "10") {
           Navigator.push(
             context,
             MaterialPageRoute(
                 builder: (context) => EdgeDeviceSensorList(edDevice: edDevice)),
           );
         }
-
-
       },
       child: Column(
         children: [
@@ -577,28 +643,32 @@ class _DashboardState extends ConsumerState<Dashboard> {
 
                 children: [
                   Row(
-                    mainAxisAlignment:MainAxisAlignment.start ,
+                    mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       Padding(
-                        padding: const EdgeInsets.only(left: 20,top: 10),
+                        padding: const EdgeInsets.only(left: 20, top: 10),
                         child: Container(
                           width: 8,
                           height: 8,
                           decoration: BoxDecoration(
-                              color:diff.inMinutes > -10 ?Colors.green:Colors.red,
+                              color: diff.inMinutes > -10
+                                  ? Colors.green
+                                  : Colors.red,
                               shape: BoxShape.circle),
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.only(left: 20,top: 10),
-                        child: Text("Date : ${edDevice.sensors![0].date.toString()} ",style: TextStyle(
+                        padding: const EdgeInsets.only(left: 20, top: 10),
+                        child: Text("Date : ${edDevice.sensors![0].date
+                            .toString()} ", style: TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.bold
                         ),),
                       ),
                       Padding(
-                        padding: const EdgeInsets.only( top: 10),
-                        child: Text(" , ${edDevice.sensors![0].time.toString()}",style: TextStyle(
+                        padding: const EdgeInsets.only(top: 10),
+                        child: Text(" , ${edDevice.sensors![0].time
+                            .toString()}", style: TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.bold
 
@@ -607,7 +677,7 @@ class _DashboardState extends ConsumerState<Dashboard> {
                     ],),
 
                   Row(
-                    mainAxisAlignment:MainAxisAlignment.spaceBetween ,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Padding(
                         padding: const EdgeInsets.only(left: 20),
@@ -619,16 +689,17 @@ class _DashboardState extends ConsumerState<Dashboard> {
 
                       Text(newList[Listed1].Name,
                           style: TextStyle(fontWeight: FontWeight.bold)),
-                     Row(
-                       mainAxisAlignment: MainAxisAlignment.end,
-                       children: [
-                         IconButton(onPressed:(){
-                           setEditPopup(edDevice);
-                         }, icon: Icon(Icons.edit, color: AppColors.secondary, size: ScreenSize.screenWidth * 0.05,)
-                         ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          IconButton(onPressed: () {
+                            setEditPopup(edDevice);
+                          }, icon: Icon(Icons.edit, color: AppColors.secondary,
+                            size: ScreenSize.screenWidth * 0.05,)
+                          ),
 
-                       ],
-                     )
+                        ],
+                      )
 
                     ],
                   ),
@@ -655,19 +726,23 @@ class _DashboardState extends ConsumerState<Dashboard> {
                             children: [
                               Visibility(
                                 visible: edDevice.sensors![index].parameters! ==
-                                    'Motion Detection' || edDevice.sensors![index].parameters! ==
-                                    'Light Status'
+                                    'Motion Detection' ||
+                                    edDevice.sensors![index].parameters! ==
+                                        'Light Status'
                                     ? false
                                     : true,
                                 child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                  mainAxisAlignment: MainAxisAlignment
+                                      .spaceAround,
                                   children: [
                                     Expanded(
                                         flex: 6,
                                         child: Padding(
-                                          padding: const EdgeInsets.only(left: 10.0),
+                                          padding: const EdgeInsets.only(
+                                              left: 10.0),
                                           child: Text(
-                                            "${edDevice.sensors![index].parameters}   : ",
+                                            "${edDevice.sensors![index]
+                                                .parameters}   : ",
                                             textAlign: TextAlign.left,
                                             style: const TextStyle(
                                                 fontWeight: FontWeight.bold),
@@ -680,8 +755,11 @@ class _DashboardState extends ConsumerState<Dashboard> {
                                         : Expanded(
                                       flex: 3,
                                       child: Padding(
-                                        padding: const EdgeInsets.only(right: 10.0),
-                                        child: Text(edDevice.sensors![index].liveData.toString(),
+                                        padding: const EdgeInsets.only(
+                                            right: 10.0),
+                                        child: Text(
+                                          edDevice.sensors![index].liveData
+                                              .toString(),
                                           textAlign: TextAlign.right,
 
                                         ),
@@ -690,7 +768,8 @@ class _DashboardState extends ConsumerState<Dashboard> {
                                     Expanded(
                                         flex: 2,
                                         child: Padding(
-                                          padding: const EdgeInsets.only(left: 10.0),
+                                          padding: const EdgeInsets.only(
+                                              left: 10.0),
                                           child: Text(
                                             edDevice.sensors![index].units
                                                 .toString(),
@@ -721,25 +800,29 @@ class _DashboardState extends ConsumerState<Dashboard> {
           ),*/
         ],
       ),
-    );
+    ));
   }
+
   getDataForDevices(UserEdDevice edDevice, int index) {
     return Consumer(builder: (context, ref, child) {
-      var Listed = newList.firstWhere((ListEdMac)=> ListEdMac.edMac == edDevice.macId.toString());
+      var Listed = newList.firstWhere((ListEdMac) =>
+      ListEdMac.edMac == edDevice.macId.toString());
       //print("FILTER ========== ${Listed.edMac}");
 
-      var Listed11 = newList.indexWhere((ListEdMac)=> ListEdMac.edMac == edDevice.macId.toString());
+      var Listed11 = newList.indexWhere((ListEdMac) =>
+      ListEdMac.edMac == edDevice.macId.toString());
 
-      ref.watch(deviceStatusNotifier).id.when(
+      ref
+          .watch(deviceStatusNotifier)
+          .id
+          .when(
           data: (data) {
-
-
             if (data.sTATUS!.isNotEmpty) {
               try {
-                if (data.sTATUS == "STATUS FAILED") {
-                } else if (edDevice.edgeDeviceId == "10") {
+                if (data.sTATUS == "STATUS FAILED") {} else
+                if (edDevice.edgeDeviceId == "10") {
                   splitData = data.sTATUS!.split(',');
-                } else  {
+                } else {
                   SingleData = data.sTATUS!.split(',');
                 }
               } catch (e) {
@@ -750,33 +833,36 @@ class _DashboardState extends ConsumerState<Dashboard> {
               });
             }
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              if(toastlabel!="" || data.sTATUS=="")
-              {
-                toastlabel="";
-
+              if (toastlabel != "" || data.sTATUS == "") {
+                toastlabel = "";
               }
-              else{
-                toastlabel=data.sTATUS.toString();
+              else {
+                toastlabel = data.sTATUS.toString();
                 ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                         content: Text(toastlabel)));
-                data.sTATUS="";
+                data.sTATUS = "";
               }
-
-
             });
-
           },
           error: (e, s) {},
           loading: () {});
-      return   Padding(
+      return Padding(
         padding: const EdgeInsets.all(8.0),
         child: Container(
           decoration: BoxDecoration(
             color: Colors.white,
             shape: BoxShape.circle,
             boxShadow: [BoxShadow(blurRadius: 10, color:
-            ((edDevice.edgeDeviceId.toString()=="10")? (index==0?(newList[Listed11].channel1==true? Colors.green:Colors.red):(index==1?(newList[Listed11].channel2==true? Colors.green:Colors.red):(newList[Listed11].channel3==true? Colors.green:Colors.red))):(newList[Listed11].channel1==true? Colors.green:Colors.red)), spreadRadius: 5)],
+            ((edDevice.edgeDeviceId.toString() == "10") ? (index == 0
+                ? (newList[Listed11].channel1 == true ? Colors.green : Colors
+                .red)
+                : (index == 1 ? (newList[Listed11].channel2 == true ? Colors
+                .green : Colors.red) : (newList[Listed11].channel3 == true
+                ? Colors.green
+                : Colors.red))) : (newList[Listed11].channel1 == true ? Colors
+                .green : Colors.red)), spreadRadius: 5)
+            ],
           ),
           child: CircleAvatar(
             backgroundColor: Colors.white,
@@ -787,7 +873,15 @@ class _DashboardState extends ConsumerState<Dashboard> {
                 // color: (edDevice.edgeDeviceId.toString()=="10")? (status[index] ==
                 //     true ?  Colors.red: Colors.green):(status1[index] ==
                 //     true ?  Colors.red: Colors.green),
-                color: (edDevice.edgeDeviceId.toString()=="10")? (index==0?(newList[Listed11].channel1==true? Colors.red:Colors.green):(index==1?(newList[Listed11].channel2==true? Colors.red:Colors.green):(newList[Listed11].channel3==true? Colors.red:Colors.green))):(newList[Listed11].channel1==true? Colors.red:Colors.green),
+                color: (edDevice.edgeDeviceId.toString() == "10"  ) ? (index == 0
+                    ? (newList[Listed11].channel1 == true ? Colors.red : Colors
+                    .green)
+                    : (index == 1 ? (newList[Listed11].channel2 == true ? Colors
+                    .red : Colors.green) : (newList[Listed11].channel3 == true
+                    ? Colors.red
+                    : Colors.green))) : (newList[Listed11].channel1 == true
+                    ? Colors.red
+                    : Colors.green),
                 onPressed: () {
                   //ApplicationHelper.showProgressDialog(context);
                   bool sensorstatus = false;
@@ -801,20 +895,20 @@ class _DashboardState extends ConsumerState<Dashboard> {
                     //   status[index] = false;
                     // }
 
-                    var Listed1 = newList.indexWhere((ListEdMac) => ListEdMac.edMac == edDevice.macId.toString());
+                    var Listed1 = newList.indexWhere((ListEdMac) =>
+                    ListEdMac.edMac == edDevice.macId.toString());
 
                     if (index == 0) {
                       if (newList[Listed1].channel1 == false) {
                         newList[Listed1].channel1 = true;
                         sensorstatus = true;
                         message = "RRCSP#2#1#1#RCEP";
-                        publish(message,edDevice.macId.toString());
-
+                        publish(message, edDevice.macId.toString());
                       } else {
                         newList[Listed1].channel1 = false;
                         sensorstatus = false;
                         message = "RRCSP#2#1#0#RCEP";
-                        publish(message,edDevice.macId.toString());
+                        publish(message, edDevice.macId.toString());
                       }
                     }
                     else if (index == 1) {
@@ -822,12 +916,12 @@ class _DashboardState extends ConsumerState<Dashboard> {
                         newList[Listed1].channel2 = true;
                         sensorstatus = true;
                         message = "RRCSP#2#2#1#RCEP";
-                        publish(message,edDevice.macId.toString());
+                        publish(message, edDevice.macId.toString());
                       } else {
                         newList[Listed1].channel2 = false;
                         sensorstatus = false;
                         message = "RRCSP#2#2#0#RCEP";
-                        publish(message,edDevice.macId.toString());
+                        publish(message, edDevice.macId.toString());
                       }
                     }
                     else {
@@ -835,12 +929,12 @@ class _DashboardState extends ConsumerState<Dashboard> {
                         newList[Listed1].channel3 = true;
                         sensorstatus = true;
                         message = "RRCSP#2#3#1#RCEP";
-                        publish(message,edDevice.macId.toString());
+                        publish(message, edDevice.macId.toString());
                       } else {
                         newList[Listed1].channel3 = false;
                         sensorstatus = false;
                         message = "RRCSP#2#3#0#RCEP";
-                        publish(message,edDevice.macId.toString());
+                        publish(message, edDevice.macId.toString());
                       }
                     }
                     ref
@@ -858,14 +952,14 @@ class _DashboardState extends ConsumerState<Dashboard> {
                     // !ref.watch(
                     //     MqttResult);
 
-                   /* if(ss!=""){
+                    /* if(ss!=""){
                       print(Mqtt);
                       ApplicationHelper.dismissProgressDialog();
                       Mqtt = "";
                     }
 */
 
-                   /* ref.read(deviceStatusNotifier.notifier).getStatus({
+                    /* ref.read(deviceStatusNotifier.notifier).getStatus({
                       "JSON_ID": "12",
                       "USER_ID": "4",
                       "DATA": {
@@ -881,20 +975,21 @@ class _DashboardState extends ConsumerState<Dashboard> {
                     //  print("LISTED1 --------- $Listed1");
 
                   }
-                  if(edDevice.edgeDeviceId.toString() == "9") {
-                    var Listed1 = newList.indexWhere((ListEdMac) => ListEdMac.edMac == edDevice.macId.toString());
-                    print(Listed1);
+                  if (edDevice.edgeDeviceId.toString() == "9") {
+                    var Listed1 = newList.indexWhere((ListEdMac) =>
+                    ListEdMac.edMac == edDevice.macId.toString());
+                    print("LISTED1 =========> $Listed1");
                     if (index == 0) {
-                      if (newList[Listed1].channel1 == false) {
-                        newList[Listed1].channel1 = true;
+                      if (newList[Listed11].channel1 == false) {
+                        newList[Listed11].channel1 = true;
                         sensorstatus = true;
                         message = "RCSP#2#1#RCEP";
-                        publish(message,edDevice.macId.toString());
-                      } else {
-                        newList[Listed1].channel1 = false;
+                        publish(message, edDevice.macId.toString());
+                      } else  {
+                        newList[Listed11].channel1 = false;
                         sensorstatus = false;
                         message = "RCSP#2#0#RCEP";
-                        publish(message,edDevice.macId.toString());
+                        publish(message, edDevice.macId.toString());
                       }
                     }
 
@@ -906,7 +1001,7 @@ class _DashboardState extends ConsumerState<Dashboard> {
                     !ref.watch(
                         statusToggleButton);
 
-                 /*   ref.read(deviceStatusNotifier.notifier).getStatus({
+                    /*   ref.read(deviceStatusNotifier.notifier).getStatus({
                       "JSON_ID": "12",
                       "USER_ID": "4",
                       "DATA": {
@@ -918,7 +1013,8 @@ class _DashboardState extends ConsumerState<Dashboard> {
                       }
                     });*/
                     print(edDevice.macId);
-                    print(sensorstatus);
+                    print("verify =======> ${newList[Listed1].channel1}");
+                    print("sensor status ----->$sensorstatus");
 
 
                     /*  print(status[index]);
@@ -926,7 +1022,7 @@ class _DashboardState extends ConsumerState<Dashboard> {
                   }
                 }
 
-                ),
+            ),
           ),
         ),
       );
@@ -1033,14 +1129,17 @@ class _DashboardState extends ConsumerState<Dashboard> {
       for (var ed in unit.edDevice!) {
         if (ed.locationId == location.locationId) {
 
-          edDeviceList!.add(ed);
+           edDeviceList!.add(ed);
+
         } else {
           // edDeviceList!.remove(ed);
         }
       }
     }
 
-    return Column(
+    return Visibility(
+        visible: location.isactive != null ? true : false,
+        child: Column(
       mainAxisAlignment: MainAxisAlignment.start,
       children: [
         Padding(
@@ -1078,17 +1177,30 @@ class _DashboardState extends ConsumerState<Dashboard> {
                   Padding(
                       padding: const EdgeInsets.only(top: 10.0),
                       child: SizedBox(
-                        width: MediaQuery.of(context).size.width,
+                        width: MediaQuery
+                            .of(context)
+                            .size
+                            .width,
                         child: ListView.builder(
                             shrinkWrap: true,
                             physics: ScrollPhysics(),
                             //itemCount: edDeviceList.where(x=>)?.length ?? 0,
-                            itemCount: edDeviceList?.where((x)=> x.locationId == location.locationId.toString()).toList().length ?? 0,
+                            itemCount: edDeviceList
+                                ?.where((x) =>
+                            x.locationId == location.locationId.toString())
+                                .toList()
+                                .length ?? 0,
                             scrollDirection: Axis.vertical,
                             itemBuilder: (context, index) {
-                              print("INDEX  -  $index" + "--" + edDeviceList!.where((x)=> x.locationId == location.locationId.toString()).toList()[index].edgeDeviceId.toString());
+                              print("INDEX  -  $index" + "--" +
+                                  edDeviceList!.where((x) => x.locationId ==
+                                      location.locationId.toString())
+                                      .toList()[index].edgeDeviceId.toString());
                               return itemBuilderEdgeDevice(
-                                  index, edDeviceList!.where((x)=> x.locationId == location.locationId.toString()).toList()[index]);
+                                  index,
+                                  edDeviceList!.where((x) => x.locationId ==
+                                      location.locationId.toString())
+                                      .toList()[index]);
                             }),
                       )),
 /*
@@ -1350,7 +1462,7 @@ class _DashboardState extends ConsumerState<Dashboard> {
           ),
         ),
       ],
-    );
+    ));
   }
 
 /*mobileUi(BuildContext context) {
@@ -1503,84 +1615,87 @@ class _DashboardState extends ConsumerState<Dashboard> {
     }
   }*/
 
-  locationPopUp() {
+    locationPopUp() {
     return showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        insetPadding: const EdgeInsets.only(left: 12.0, right: 12.0),
-        titlePadding: const EdgeInsets.all(20.0),
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text("Location"),
-            IconButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                icon: const Icon(Icons.close))
-          ],
-        ),
-        content: Builder(builder: (context) {
-          return SizedBox(
-            width: ScreenSize.screenWidth * 400,
-            //height:  ScreenSize.screenHeight * 1,
-            child: TextField(
-              textInputAction: TextInputAction.next,
-              controller: _locationnamecontroller,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15.0),
-                ),
-                filled: true,
-                //labelText: 'Number',
-                hintText: 'Enter your Location',
-              ),
-            ),
-          );
-        }),
-        actions: <Widget>[
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  StatefulBuilder(
-                    builder: (BuildContext context,
-                        void Function(void Function()) setState) {
-                      return Checkbox(
-                          value: isActiveLocation,
-                          onChanged: (value) {
-                            setState(() {
-                              isActiveLocation = value;
-                            });
-                          });
+      builder: (ctx) =>
+          AlertDialog(
+            insetPadding: const EdgeInsets.only(left: 12.0, right: 12.0),
+            titlePadding: const EdgeInsets.all(20.0),
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text("Location"),
+                IconButton(
+                    onPressed: () {
+                      Navigator.pop(context);
                     },
+                    icon: const Icon(Icons.close))
+              ],
+            ),
+            content: Builder(builder: (context) {
+              return SizedBox(
+                width: ScreenSize.screenWidth * 400,
+                //height:  ScreenSize.screenHeight * 1,
+                child: TextField(
+                  textInputAction: TextInputAction.next,
+                  controller: _locationnamecontroller,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15.0),
+                    ),
+                    filled: true,
+                    //labelText: 'Number',
+                    hintText: 'Enter your Location',
                   ),
-                  const Text(
-                    'isActive',
-                    style:
-                    TextStyle(fontSize: 15.0, fontWeight: FontWeight.bold),
+                ),
+              );
+            }),
+            actions: <Widget>[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      StatefulBuilder(
+                        builder: (BuildContext context,
+                            void Function(void Function()) setState) {
+                          return Checkbox(
+                              value: isActiveLocation,
+                              onChanged: (value) {
+                                setState(() {
+                                  isActiveLocation = value;
+                                });
+                              });
+                        },
+                      ),
+                      const Text(
+                        'isActive',
+                        style:
+                        TextStyle(fontSize: 15.0, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      if (_locationnamecontroller.text.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text(
+                                    'Location Name should not be empty')));
+                      } else {
+                        addLocation();
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(14),
+                      child: const Text("OK"),
+                    ),
                   ),
                 ],
               ),
-              TextButton(
-                onPressed: () {
-                  if (_locationnamecontroller.text.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text('Location Name should not be empty')));
-                  } else {
-                    addLocation();
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  child: const Text("OK"),
-                ),
-              ),
             ],
           ),
-        ],
-      ),
     );
   }
 
@@ -1631,97 +1746,101 @@ class _DashboardState extends ConsumerState<Dashboard> {
   }
 
   setEditPopup(UserEdDevice edDevice) {
-
-    var Listed1 = newList.indexWhere((ListEdMac)=> ListEdMac.edMac == edDevice.macId.toString());
+    var Listed1 = newList.indexWhere((ListEdMac) =>
+    ListEdMac.edMac == edDevice.macId.toString());
     print(edDevice.macId);
     print(newList.length);
     print(Listed1);
     //newList[Listed1].Name= edDevice.name;
-    TextEditingController _labelController = TextEditingController(text: newList[Listed1].Name);
+    TextEditingController _labelController = TextEditingController(
+        text: newList[Listed1].Name);
     return showDialog(
       context: context,
-      builder: (txt) => AlertDialog(
-        insetPadding: const EdgeInsets.only(left: 12.0, right: 12.0),
-        titlePadding: const EdgeInsets.all(20.0),
+      builder: (txt) =>
+          AlertDialog(
+            insetPadding: const EdgeInsets.only(left: 12.0, right: 12.0),
+            titlePadding: const EdgeInsets.all(20.0),
 
-        content: Builder(builder: (context) {
-          return SizedBox(
-            width: ScreenSize.screenWidth * 400,
-            //height:  ScreenSize.screenHeight * 1,
-            child: TextField(
-              textInputAction: TextInputAction.next,
-              controller: _labelController,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15.0),
+            content: Builder(builder: (context) {
+              return SizedBox(
+                width: ScreenSize.screenWidth * 400,
+                //height:  ScreenSize.screenHeight * 1,
+                child: TextField(
+                  textInputAction: TextInputAction.next,
+                  controller: _labelController,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15.0),
+                    ),
+                    filled: true,
+                    //labelText: 'Number',
+                    hintText: 'Enter your Text',
+                  ),
                 ),
-                filled: true,
-                //labelText: 'Number',
-                hintText: 'Enter your Text',
-              ),
-            ),
-          );
-        }),
-        actions: <Widget>[
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  child: const Text("Cancel"),
-                ),
-              ),
-              TextButton(
-                onPressed: () {
-                  if (_labelController.text.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text('Textfield should not be empty')));
-                  } else {
-                    var Listed1 = newList.indexWhere((ListEdMac)=> ListEdMac.edMac == edDevice.macId.toString());
-                    newList[Listed1].Name= _labelController.text;
-                    tempMap['LOCATION_ID'] = edDevice.locationId;
-                    tempMap['PRODUCT_CODE'] = edDevice.productCode;
-                    tempMap['NAME'] =_labelController.text;
-                    tempMap['MAC_ID'] = edDevice.macId;
-                    tempMap['SERIAL_NO'] =edDevice.serialNo;
-                    tempMap['EDGE_DEVICE_ID'] =edDevice.edgeDeviceId;
-                    mainMap["JSON_ID"] = "09";
-                    mainMap["USER_ID"] = Helper.userIDValue;
-                    mainMap["DATA"] = tempMap;
-                    mainMap["ISACTIVE"] = "1";
+              );
+            }),
+            actions: <Widget>[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(14),
+                      child: const Text("Cancel"),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      if (_labelController.text.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text(
+                                    'Textfield should not be empty')));
+                      } else {
+                        var Listed1 = newList.indexWhere((ListEdMac) =>
+                        ListEdMac.edMac == edDevice.macId.toString());
+                        newList[Listed1].Name = _labelController.text;
+                        tempMap['LOCATION_ID'] = edDevice.locationId;
+                        tempMap['PRODUCT_CODE'] = edDevice.productCode;
+                        tempMap['NAME'] = _labelController.text;
+                        tempMap['MAC_ID'] = edDevice.macId;
+                        tempMap['SERIAL_NO'] = edDevice.serialNo;
+                        tempMap['EDGE_DEVICE_ID'] = edDevice.edgeDeviceId;
+                        mainMap["JSON_ID"] = "09";
+                        mainMap["USER_ID"] = Helper.userIDValue;
+                        mainMap["DATA"] = tempMap;
+                        mainMap["ISACTIVE"] = "1";
 
-                    ref
-                        .read(apiProvider)
-                        .addEdDevices(mainMap);
+                        ref
+                            .read(apiProvider)
+                            .addEdDevices(mainMap);
 
-                    ScaffoldMessenger.of(context)
-                        .showSnackBar(const SnackBar(
-                        content:
-                        Text('Updated SuccessFully')));
+                        ScaffoldMessenger.of(context)
+                            .showSnackBar(const SnackBar(
+                            content:
+                            Text('Updated SuccessFully')));
 
-                    Navigator.pop(context);
-                    ref
-                        .read(nameNotifier
-                        .notifier)
-                        .state =
-                    !ref.watch(
-                        nameNotifier);
-
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  child: const Text("OK"),
-                ),
+                        Navigator.pop(context);
+                        ref
+                            .read(nameNotifier
+                            .notifier)
+                            .state =
+                        !ref.watch(
+                            nameNotifier);
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(14),
+                      child: const Text("OK"),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
     );
   }
 
@@ -1731,7 +1850,7 @@ class _DashboardState extends ConsumerState<Dashboard> {
     print("Mqtt is connected successfully");
   }*/
 
- /* Future<bool> connectMqtt() async {
+  /* Future<bool> connectMqtt() async {
     setStatus('Connecting Mqtt Broker');
     ByteData rootCA = await rootBundle.load("assets/mqtt_certificates/AmazonRootCA1.pem");
     ByteData deviceCert  = await rootBundle.load("assets/mqtt_certificates/DeviceCertificates.crt");
@@ -1761,9 +1880,9 @@ class _DashboardState extends ConsumerState<Dashboard> {
     print('EXAMPLE::AWS client connecting....');
     client.connectionMessage = connMess;
 
-  *//*  final MqttConnectMessage connectMessage = MqttConnectMessage().withClientIdentifier(uniqueId).startClean();
+  */ /*  final MqttConnectMessage connectMessage = MqttConnectMessage().withClientIdentifier(uniqueId).startClean();
     client.connectionMessage = connectMessage;
-*//*
+*/ /*
     try {
       await client.connect();
     } on NoConnectionException catch (e) {
@@ -1806,35 +1925,49 @@ class _DashboardState extends ConsumerState<Dashboard> {
   }*/
 
   void initializeMQTTClient() async {
-
-   // _client = MqttServerClient(_host, _identifier);
+    // _client = MqttServerClient(_host, _identifier);
     _client.port = 8883;
     _client.keepAlivePeriod = 20;
-   // _client.onDisconnected = onDisconnected;
+    // _client.onDisconnected = onDisconnected;
     _client.secure = true;
     _client.logging(on: true);
 
+
+   /* ref.watch(userDataNotifier(Helper.userIDValue)).when(data: (data){
+      print("Data Length===>"+data.data!.units!.length.toString());
+      if(data.data!=null)
+      {
+        mqttMac(data);
+      }
+
+    }, error: (error,e){
+
+    }, loading: (){});*/
+
     /// Add the successful connection callback
     _client.onConnected = onConnected;
-   // _client.onSubscribed = onSubscribed;
+    // _client.onSubscribed = onSubscribed;
 
     //for the security, load secrity credentials file
     //final currDir = '${path.current}lib${path.separator}pem${path.separator}';
     final context = SecurityContext.defaultContext;
-    String clientAuth = await rootBundle.loadString("assets/mqtt_certificates/AmazonRootCA1.pem");
+    String clientAuth = await rootBundle.loadString(
+        "assets/mqtt_certificates/AmazonRootCA1.pem");
     context.setClientAuthoritiesBytes(clientAuth.codeUnits);
     String trustedCer =
-    await rootBundle.loadString("assets/mqtt_certificates/efa947d54b673e8d0c9a2b88566efdfee1dbc0427d720ebcda7c65db4bac7a8a-certificate.pem.crt");
+    await rootBundle.loadString(
+        "assets/mqtt_certificates/efa947d54b673e8d0c9a2b88566efdfee1dbc0427d720ebcda7c65db4bac7a8a-certificate.pem.crt");
     context.useCertificateChainBytes(trustedCer.codeUnits);
     String privateKey =
-    await rootBundle.loadString("assets/mqtt_certificates/efa947d54b673e8d0c9a2b88566efdfee1dbc0427d720ebcda7c65db4bac7a8a-private.pem.key");
+    await rootBundle.loadString(
+        "assets/mqtt_certificates/efa947d54b673e8d0c9a2b88566efdfee1dbc0427d720ebcda7c65db4bac7a8a-private.pem.key");
     context.usePrivateKeyBytes(privateKey.codeUnits);
 
 
     final MqttConnectMessage connMess = MqttConnectMessage()
         .withClientIdentifier("")
-        //.withWillTopic('test') // If you set this you must set a will message
-        //.withWillMessage('')
+    //.withWillTopic('test') // If you set this you must set a will message
+    //.withWillMessage('')
         .startClean() // Non persistent session for testing
         .withWillQos(MqttQos.atLeastOnce);
     print('EXAMPLE::AWS client connecting....');
@@ -1848,18 +1981,17 @@ class _DashboardState extends ConsumerState<Dashboard> {
   void connect(List<String> edDevice) async {
     assert(_client != null);
     try {
-
       print('EXAMPLE::AWS start client connecting....');
       //_currentState.setAppConnectionState(MQTTAppConnectionState.connecting);
 
 
       await _client.connect();
 
-      for(int i=0;i<edDevice.length;i++)
-      {
-        _client.subscribe("topic/" +edDevice[i]+ "/irc2app", MqttQos.atMostOnce);
+      for (int i = 0; i < edDevice.length; i++) {
+        _client.subscribe(
+            "topic/" + edDevice[i] + "/irc2app", MqttQos.atMostOnce);
+        print("SUBS MAC" + i.toString() + "_topic/" + edDevice[i] + "/irc2app");
       }
-
     } on Exception catch (e) {
       print('EXAMPLE::client exception - $e');
       disconnect();
@@ -1870,94 +2002,100 @@ class _DashboardState extends ConsumerState<Dashboard> {
     print('Disconnected');
     _client.disconnect();
   }
-  void onConnected(){
+
+  void onConnected() {
     print("connected");
-    _client.updates?.listen((List<MqttReceivedMessage<MqttMessage>> connection) {
-      final MqttPublishMessage recMess = connection[0].payload as MqttPublishMessage;
+    _client.updates?.listen((
+        List<MqttReceivedMessage<MqttMessage>> connection) {
+      final MqttPublishMessage recMess = connection[0]
+          .payload as MqttPublishMessage;
       final String pt =
       MqttPublishPayload.bytesToStringAsString(recMess.payload.message);
       //_currentState.setReceivedText(pt);
 
-     // ApplicationHelper.dismissProgressDialog();
-        Mqtt = pt;
-      print('EXAMPLE::Change notification:: topic is <${connection[0].topic}>, payload is <-- $pt -->');
+      // ApplicationHelper.dismissProgressDialog();
+      Mqtt = pt;
+      print('EXAMPLE::Change notification:: topic is <${connection[0]
+          .topic}>, payload is <-- $pt -->');
       //datas = "RCSP#94E686617EB8#10#0#0#0#RCEP";
 
 
-       var splitted =  pt.split("#");
-       print(splitted[0]);
-       print(splitted[1]);
-       print(splitted[2]);
+      var splitted = pt.split("#");
+      print(splitted[0]);
+      print(splitted[1]);
+      print(splitted[2]);
 
-          if(splitted[1].length>1)
-         {
-           var macindex = newList.indexWhere((ListEdMac)=> ListEdMac.edMac == splitted[1].toString());
-           print(macindex);
+      if (splitted[1].length > 1) {
+        var macindex = newList.indexWhere((ListEdMac) =>
+        ListEdMac.edMac == splitted[1].toString());
+        print(macindex);
 
-           if(splitted[2]=="10")
-           {
-             if(splitted[3]=="0")
-             {
-               newList[macindex].channel1=false;
-             }
-             else
-             {
-               newList[macindex].channel1=true;
-             }
+        if (splitted[2] == "10") {
+          if (splitted[3] == "0") {
+            newList[macindex].channel1 = false;
+          }
+          else {
+            newList[macindex].channel1 = true;
+          }
 
-             if(splitted[4]=="0")
-             {
-               newList[macindex].channel2=false;
-             }
-             else
-             {
-               newList[macindex].channel2=true;
-             }
-             if(splitted[5]=="0")
-             {
-               newList[macindex].channel3=false;
-             }
-             else
-             {
-               newList[macindex].channel3=true;
-             }
-           }
-           else
-           {
-
-           }
-           ref
-               .read(statusToggleButton
-               .notifier)
-               .state =
-           !ref.watch(
-               statusToggleButton);
-
-         }
+          if (splitted[4] == "0") {
+            newList[macindex].channel2 = false;
+          }
+          else {
+            newList[macindex].channel2 = true;
+          }
+          if (splitted[5] == "0") {
+            newList[macindex].channel3 = false;
+          }
+          else {
+            newList[macindex].channel3 = true;
+          }
+        }
+        else {
+          if (splitted[3] == "0") {
+            newList[macindex].channel1 = false;
+          }
+          else {
+            newList[macindex].channel1 = true;
+          }
+        }
+        ref
+            .read(statusToggleButton
+            .notifier)
+            .state =
+        !ref.watch(
+            statusToggleButton);
+      }
 
       print(
-          'EXAMPLE::Change notification:: topic is <${connection[0].topic}>, payload is <-- $pt -->');
+          'EXAMPLE::Change notification:: topic is <${connection[0]
+              .topic}>, payload is <-- $pt -->');
       print('');
 
       //ref.read(userDataNotifier(Helper.userIDValue));
 
-     // ApplicationHelper.dismissProgressDialog();
+      // ApplicationHelper.dismissProgressDialog();
     });
-
   }
 
-  void publish(String message,String Mac) {
-
-    print("Publish====>"+message+"-"+Mac);
+  void publish(String message, String Mac) {
+    print("Publish====>" + message + "-" + Mac);
     final MqttClientPayloadBuilder builder = MqttClientPayloadBuilder();
     builder.addString(message);
-    _client.publishMessage("topic/" + Mac + "/app2irc", MqttQos.atLeastOnce, builder.payload!);
+    _client.publishMessage(
+        "topic/" + Mac + "/app2irc", MqttQos.atLeastOnce, builder.payload!);
   }
+
   void subscribe() async {
-    _client.subscribe("test", MqttQos.atMostOnce);
-
+    _client.subscribe("test", MqttQos.atLeastOnce);
   }
 
+  void mqttMac(UserDeviceList userDeviceList){
+    print("UNIT LENGTH ========== ${userDeviceList.data!.units!.length}");
+   if(userDeviceList.data!.units != null){
+     MqttTopics(userDeviceList.data!.units!);
+   }
+
+  }
 
 }
-

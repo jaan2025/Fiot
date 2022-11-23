@@ -158,6 +158,7 @@ class UserEdDevice {
   UserEdDevice({
     this.edgeId,
     this.locationId,
+    this.productName,
     this.productCode,
     this.name,
     this.macId,
@@ -170,6 +171,7 @@ class UserEdDevice {
 
   String ?edgeId;
   String ?locationId;
+  dynamic productName;
   String ?productCode;
   dynamic name;
   String ?macId;
@@ -183,6 +185,7 @@ class UserEdDevice {
   factory UserEdDevice.fromJson(Map<String, dynamic> json) => UserEdDevice(
     edgeId: json["EDGE_ID"]??"",
     locationId: json["LOCATION_ID"]??"",
+    productName: json["PRODUCT_NAME"]??"",
     productCode: json["PRODUCT_CODE"]??"",
     name: json["NAME"]??"",
     macId: json["MAC_ID"]??"",
@@ -196,6 +199,7 @@ class UserEdDevice {
   Map<String, dynamic> toJson() => {
     "EDGE_ID": edgeId,
     "LOCATION_ID": locationId,
+    "PRODUCT_NAME":productName,
     "PRODUCT_CODE": productCode,
     "NAME": name,
     "MAC_ID": macId,

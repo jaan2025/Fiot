@@ -341,8 +341,9 @@ class _ConfigurationState extends ConsumerState<Configuration> {
                                         Map valueMap = json.decode(value);
 
                                         for (var mac in Helper.listOfMac) {
+                                          print(Helper.listOfMac);
                                           if (mac == valueMap['MacAddress']){
-                                            //goBack = false;
+                                            goBack = false;
                                             Navigator.push(
                                                 context,
                                                 MaterialPageRoute(
@@ -1363,6 +1364,8 @@ class _ConfigurationState extends ConsumerState<Configuration> {
               KEEPALIVE_TIME: finalResult[7],
               MAC_ID: Helper.Macaddress.toUpperCase(),
               VERSION: finalResult[6],
+              ISACTIVE: "1",
+
             ))
     );
     Future.delayed(

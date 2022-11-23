@@ -125,6 +125,7 @@ class _LoadingAnimationScreenState
           KEEPALIVE_TIME: finalResult[7],
           MAC_ID: Helper.Macaddress.toUpperCase(),
           VERSION: finalResult[6],
+          ISACTIVE: "1"
         )));
     Future.delayed(const Duration(seconds: 1), () {
       print("addunit_response");

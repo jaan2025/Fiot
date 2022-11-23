@@ -43,6 +43,7 @@ class Helper {
   static List<String> listOfMac = [];
   static List<String> teamList = [];
   static List<String> projectFilterList =[];
+
   static var distinctIds;
   static String keyDashBoard = 'LoginScreen';
   static var sharedCreatedId, shareddepId, sharedRoleId, sharedteamId, sharedisActive;
@@ -54,6 +55,7 @@ class Helper {
   static String sharedAvatar = '';
   static bool logout = true;
   static List<UserUnit> mUnit = [];
+  static List<UserEdDevice> mDev = [];
   static String avatar =
       'https://firebasestorage.googleapis.com/v0/b/projectmanagement-process.appspot.com/o/avatar_3.png?alt=media&token=05600dda-67d7-4a0c-a6e7-fc6c09fe4a95';
   static List<String> location = [];

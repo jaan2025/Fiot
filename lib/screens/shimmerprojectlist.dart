@@ -15,6 +15,8 @@ class ShimmerForProjectList extends StatelessWidget {
         print("Rebuilding ...");
         _offSet += 20;
         _time = 800 + _offSet;
+        print(_offSet);
+        print(_time);
         return Shimmer.fromColors(
           baseColor: Colors.grey[300]!,
           highlightColor: Colors.grey[100]!,

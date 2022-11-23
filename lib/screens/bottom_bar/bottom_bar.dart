@@ -152,7 +152,7 @@ class _BottomBarState extends State<BottomBar> {
                           child: IconButton(
                             onPressed: () {
                               ref.refresh(userDataNotifier(Helper.userIDValue));
-                              Helper.qrScan = false;
+                              //Helper.qrScan = false;
                               ref.read(navNotifier.notifier).currentIndex(2);
                               ref.read(userDataNotifier(Helper.userIDValue));
                             },

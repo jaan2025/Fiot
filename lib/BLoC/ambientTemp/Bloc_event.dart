@@ -1,5 +1,6 @@
 
 import 'package:equatable/equatable.dart';
+import 'package:generic_iot_sensor/model/WeatherApiModel.dart';
 
 import '../../model/location_model.dart';
 
@@ -15,7 +16,7 @@ abstract class blocEvent extends Equatable {
 class  LoadTemp extends blocEvent {}
 class  UpdateTemp extends blocEvent {
 
-  final MyLocationModel myLocationModel;
+  final weatherModel myLocationModel;
 
   const UpdateTemp({required this.myLocationModel});
 

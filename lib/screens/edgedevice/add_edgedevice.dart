@@ -223,12 +223,12 @@ class _AddEdgeDeviceState extends ConsumerState<AddEdgeDevice> {
                                             ref.refresh(userDataNotifier(Helper.userIDValue));
                                           },
                                         );
-                                       /* Future.delayed(
+                                       Future.delayed(
                                           const Duration(milliseconds: 400),
                                               () {
                                           Navigator.pushNamed(context, AppId.DashboardID);
                                           },
-                                        );*/
+                                        );
                                         ScaffoldMessenger.of(context)
                                             .showSnackBar(const SnackBar(
                                             content:

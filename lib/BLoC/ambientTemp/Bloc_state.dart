@@ -6,6 +6,7 @@ import 'package:equatable/equatable.dart';
 
 
 
+import '../../model/WeatherApiModel.dart';
 import '../../model/location_model.dart';
 
 
@@ -25,7 +26,7 @@ class weatherInitial  extends blocState {}
 class weatherLoading extends blocState {}
 
 class weatherLoaded extends blocState {
-  final MyLocationModel  myLocationModel;
+  final weatherModel  myLocationModel;
   const weatherLoaded( this.myLocationModel);
 
 }
