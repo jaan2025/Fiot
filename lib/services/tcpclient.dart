@@ -12,9 +12,7 @@ final tcpProvider = Provider.autoDispose((ref) => TCPManager(ref));
 
 class TCPManager {
   Ref ref;
-
   TCPManager(this.ref);
-
   Socket? clientSocket;
   bool isConnect = false; // Server Connect bool
   bool responseNotReached = true;
@@ -110,6 +108,6 @@ class TCPManager {
     isConnect = false;
     clientSocket?.close();
     clientSocket = null;
-    ApplicationHelper.dismissProgressDialog();
+    //ApplicationHelper.dismissProgressDialog();
   }
 }

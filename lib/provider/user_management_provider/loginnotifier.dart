@@ -25,6 +25,16 @@ FutureProvider.family<UserDeviceList, String>((ref, id) async {
   return await ref.read(apiProvider).getUserInfo(userId: id);
 });
 
+final waterDataNotifier =
+FutureProvider.family<UserDeviceList, String>((ref, id) async {
+  return await ref.read(apiProvider).getUserInfo(userId: id);
+});
+
+final assetDataNotifier =
+FutureProvider.family<UserDeviceList, String>((ref, id) async {
+  return await ref.read(apiProvider).getUserInfo(userId: id);
+});
+
 final getDevices =
 FutureProvider<GetDevicesModel>((ref) async {
   return await ref.read(apiProvider).getEdgeDeviceList();

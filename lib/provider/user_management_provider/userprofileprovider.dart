@@ -23,7 +23,7 @@ class GetUserProvider extends StateNotifier<AddUserState> {
 
   getUserInfo() async {
     final prefs = await SharedPreferences.getInstance();
-    String? userId = prefs.getString(Helper.userId);
+    String? userId = prefs.getString(Helper.userIDValue);
     state = _loading();
     final data = await ref.read(apiProvider)
         .getUserInfo(userId: userId!);

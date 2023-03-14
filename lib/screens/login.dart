@@ -34,6 +34,7 @@ class _LoginState extends ConsumerState<Login> {
 
   @override
   void initState() {
+    Helper.classes = "Login";
     super.initState();
     requestLocationPermission();
 
@@ -42,6 +43,7 @@ class _LoginState extends ConsumerState<Login> {
 
   @override
   Widget build(BuildContext context) {
+    print("loginPage");
     ScreenSize().init(context);
     return mobileUi(context);
   }
@@ -73,6 +75,7 @@ class _LoginState extends ConsumerState<Login> {
     prefs.setString(Helper.mobile, username);
     prefs.setString(Helper.password, password);
     prefs.setString(Helper.userId, userId!);
+    prefs.setString(Helper.userIDValue, userId);
   }
 
 
@@ -169,33 +172,30 @@ class _LoginState extends ConsumerState<Login> {
                                   bottom: 100.0, left: 15.0, right: 15.0),
                               child: Padding(
                                 padding: const EdgeInsets.all(4.0),
-                                child: Card(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(30.0),),
-                                  color: Colors.white,
-                                  shadowColor: Colors.blueGrey,
-                                  elevation: 30,
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(10.0),
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                          children: [
-                                            Text('User Login',
-                                                style: TextStyle(
-                                                    fontSize:
-                                                    ScreenSize.screenWidth *
-                                                        0.07,
-                                                    color: AppColors.secondary,
-                                                    fontWeight: FontWeight.bold)),
-                                          ],
-                                        ),
-                                        Padding(
-                                          padding: const EdgeInsets.only(top: 15.0),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(10.0),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                        MainAxisAlignment.center,
+                                        children: [
+                                          Text('SIGN IN',
+                                              style: TextStyle(
+                                                  fontSize:
+                                                  ScreenSize.screenWidth *
+                                                      0.07,
+                                                  color: AppColors.secondary,
+                                                  fontWeight: FontWeight.bold)),
+                                        ],
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 25.0),
+                                        child: SizedBox(
+                                          height:55,
                                           child: TextField(
+
                                             textInputAction: TextInputAction.next,
                                             controller: mobilenoController,
                                             keyboardType: TextInputType.number,
@@ -203,32 +203,27 @@ class _LoginState extends ConsumerState<Login> {
                                               LengthLimitingTextInputFormatter(10)
                                             ],
                                             decoration: InputDecoration(
-                                              suffixIcon: const Icon(Icons.phone),
-                                              border: OutlineInputBorder(
-                                                borderRadius:
-                                                BorderRadius.circular(15.0),
-                                              ),
-                                              filled: true,
+                                              suffixIcon: const Icon(Icons.phone,color: Colors.black,),
+
                                               labelText: 'Mobile Number',
-                                              hintText: 'Enter your Mobile Number',
+
                                             ),
                                           ),
                                         ),
-                                        Padding(
-                                          padding: const EdgeInsets.only(top: 10.0),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 10.0),
+                                        child: SizedBox(
+                                          height:55,
                                           child: TextField(
                                             controller: passwordController,
                                             textInputAction: TextInputAction.done,
                                             obscureText:
                                             ref.watch(loginPasswordToggle),
                                             decoration: InputDecoration(
-                                              border: OutlineInputBorder(
-                                                borderRadius:
-                                                BorderRadius.circular(15.0),
-                                              ),
-                                              filled: true,
+
                                               labelText: 'Password',
-                                              hintText: 'Enter your password',
+
                                               suffixIcon: InkWell(
                                                 onTap: () {
                                                   ref
@@ -239,55 +234,61 @@ class _LoginState extends ConsumerState<Login> {
                                                       loginPasswordToggle);
                                                 },
                                                 child: Icon(
+
                                                   ref.watch(loginPasswordToggle) ==
                                                       true
                                                       ? Icons.visibility
-                                                      : Icons.visibility_off,
+                                                      : Icons.visibility_off, color: Colors.black,
                                                 ),
                                               ),
                                             ),
                                           ),
                                         ),
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.end,
-                                          children: [
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                  top: 15.0, right: 5.0),
-                                              child: Text(
-                                                'Forgot Password?',
-                                                style: TextStyle(
-                                                    fontSize:
-                                                    ScreenSize.screenWidth *
-                                                        0.04),
-                                              ),
+                                      ),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.end,
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                top: 15.0, right: 5.0),
+                                            child: Text(
+                                              'Forgot Password?',
+                                              style: TextStyle(
+                                                  fontSize:
+                                                  ScreenSize.screenWidth *
+                                                      0.04),
                                             ),
-                                          ],
-                                        ),
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                              top: 15.0, bottom: 10.0),
-                                          child: Consumer(
-                                              builder: (context, ref, child) {
-                                                return ElevatedButton(
+                                          ),
+                                        ],
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                            top: 15.0, bottom: 10.0),
+                                        child: Consumer(
+                                            builder: (context, ref, child) {
+                                              return SizedBox(
+                                                width: 500,
+                                                child: ElevatedButton(
                                                   style: ButtonStyle(
                                                       shadowColor:
                                                       MaterialStateProperty.all(
-                                                          Colors.red),
+                                                          Colors.black),
                                                       backgroundColor:
                                                       MaterialStateProperty.all(
-                                                          Colors.white),
+                                                          Colors.black),
                                                       shape: MaterialStateProperty.all<
                                                           RoundedRectangleBorder>(
                                                           RoundedRectangleBorder(
                                                             borderRadius:
-                                                            BorderRadius.circular(18.0),
+                                                            BorderRadius.circular(7.0),
                                                           ))),
                                                   onPressed: () async {
                                                     if (validateLoginField()) {
                                                       canLogin = true;
                                                       Helper.logout = false;
-                                                       loginUser();
+
+                                                     loginUser();
+
                                                     }
                                                   },
                                                   child: const Padding(
@@ -299,7 +300,7 @@ class _LoginState extends ConsumerState<Login> {
                                                     child: Text(
                                                       'LOGIN',
                                                       style:
-                                                      TextStyle(color: Colors.red),
+                                                      TextStyle(color: Colors.white),
                                                     ),
                                                   ),
                                                   /* style: ElevatedButton.styleFrom(
@@ -307,65 +308,94 @@ class _LoginState extends ConsumerState<Login> {
                                                           .screenHeight *
                                                           0.07), // fromHeight use double.infinity as width and 40 is the height
                                                     ),*/
-                                                );
-                                              }),
-                                        ),
-                                        Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: Center(
-                                            child: Row(
-                                              mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                              children: [
-                                                const Text(
-                                                  "Don't have an account? ",
+                                                ),
+                                              );
+                                            }),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Center(
+                                          child: Row(
+                                            mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                            children: [
+                                              const Text(
+                                                "Don't have an account? ",
+                                                style: TextStyle(
+                                                    color: Colors.black),
+                                              ),
+                                              GestureDetector(
+                                                onTap: () {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                      const Register(),
+                                                    ),
+                                                  );
+                                                },
+                                                child: const Text(
+                                                  "SIGN UP",
                                                   style: TextStyle(
-                                                      color: Colors.black),
+                                                      color: Colors.blue,
+                                                      fontSize: 15,
+                                                      fontWeight:
+                                                      FontWeight.w700),
                                                 ),
-                                                GestureDetector(
-                                                  onTap: () {
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                        builder: (context) =>
-                                                        const Register(),
-                                                      ),
-                                                    );
-                                                  },
-                                                  child: const Text(
-                                                    " Sign Up",
-                                                    style: TextStyle(
-                                                        color: Colors.red,
-                                                        fontSize: 15,
-                                                        fontWeight:
-                                                        FontWeight.w700),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
+                                              ),
+                                            ],
                                           ),
                                         ),
-                                      ],
-                                    ),
+                                      ),
+
+
+                                    ],
                                   ),
                                 ),
                               ),
                             ),
+
                           ],
                         );
                       }),
                       Positioned(
                         //top: ScreenSize.screenHeight * 0.525,
-                        bottom: ScreenSize.screenHeight * 0.50,
-                        right: ScreenSize.screenWidth * 0.16,
+                        bottom: ScreenSize.screenHeight * 0.55,
+                        right: ScreenSize.screenWidth * 0.19,
                         child: SizedBox(
-                            width: ScreenSize.screenWidth * 0.68,
+                            width: ScreenSize.screenWidth * 0.65,
                             height: ScreenSize.screenHeight * 0.5,
                             child: Image(
                                 width: ScreenSize.screenWidth * 0.65,
                                 image: const AssetImage(
-                                    'assets/images/rax_logo.png'))),
+                                    'assets/images/4957136.jpg'))),
                       ),
+                      Positioned(
+                        //top: ScreenSize.screenHeight * 0.525,
+                        bottom: ScreenSize.screenHeight * 0.42,
+                        right: ScreenSize.screenWidth * 0.16,
+                        child: SizedBox(
+                            width: ScreenSize.screenWidth * 0.35,
+                            height: ScreenSize.screenHeight * 0.5,
+                            child: Image(
+                                width: ScreenSize.screenWidth * 0.65,
+                                image: const AssetImage(
+                                    'assets/images/5500661.jpg'))),
+                      ),
+                      Positioned(
+                        //top: ScreenSize.screenHeight * 0.525,
+                        bottom: ScreenSize.screenHeight * 0.46,
+                        right: ScreenSize.screenWidth * 0.65,
+                        child: SizedBox(
+                            width: ScreenSize.screenWidth * 0.24,
+                            height: ScreenSize.screenHeight * 0.5,
+                            child: Image(
+                                width: ScreenSize.screenWidth * 0.65,
+                                image: const AssetImage(
+                                    'assets/images/3293465.jpg'))),
+                      ),
+
+
 
                     ],
                   ),
@@ -398,12 +428,13 @@ class _LoginState extends ConsumerState<Login> {
     }
   }
 
+
   loginUser() async {
     visibility = true;
     String? token = await FirebaseMessaging.instance.getToken();
     ref.read(loginUserNotifier.notifier). loginUser({
       "JSON_ID": "05",
-      "USER_ID": "",
+       "USER_ID": "",
       "DATA": {
         "MOBILE_NO": '91${mobilenoController.text}',
         "PASSWORD": passwordController.text,

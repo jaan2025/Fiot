@@ -7,6 +7,7 @@ import '../helper/helper.dart';
 import '../provider/navigation_provider.dart';
 import '../res/colors.dart';
 import '../res/screensize.dart';
+import 'AssetTrackingUnit/ATUinput.dart';
 import 'bottom_bar/bottom_bar.dart';
 import 'configuration.dart';
 import 'configuration_list.dart';
@@ -50,7 +51,10 @@ class _DashBoardScreenState extends ConsumerState<DashBoardScreen> {
   Widget build(BuildContext context) {
     ScreenSize().init(context);
     return Consumer(builder: (context, ref, child) {
-      final currentIndex = ref.watch(navNotifier);
+      var currentIndex = ref.watch(navNotifier);
+      if(Helper.logout == false){
+        currentIndex =0;
+      }
       print("CURRENT INDEX $currentIndex");
       return SafeArea(
         child: Scaffold(

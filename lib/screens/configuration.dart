@@ -26,9 +26,11 @@ import 'communicationtype.dart';
 import 'edgedevice/add_edgedevice.dart';
 
 class Configuration extends ConsumerStatefulWidget {
-  String? form;
+  String? IPADDRESS;
+  dynamic MAC;
+  dynamic unitID;
 
-  Configuration({Key? key, form}) : super(key: key);
+  Configuration({Key? key, this.IPADDRESS,this.MAC,this.unitID}) : super(key: key);
 
   @override
   _ConfigurationState createState() => _ConfigurationState();
@@ -81,11 +83,12 @@ class _ConfigurationState extends ConsumerState<Configuration> {
 
   var finalResults, packId;
   int tempInt = 0;
-  late ProgressDialog pr;
+  ProgressDialog ? pr;
 
   String _scanBarcode = 'Unknown';
 
   bool goBack = true;
+  bool isLoading = false;
 
   Future<String> scanQR() async {
     String barcodeScanRes = '';
@@ -120,6 +123,8 @@ class _ConfigurationState extends ConsumerState<Configuration> {
     tempInt = 0;
     ReadCommunicationData();
 
+    Helper.classes = "CONFIGURATION";
+
   }
 
   @override
@@ -134,6 +139,8 @@ class _ConfigurationState extends ConsumerState<Configuration> {
   }
 
   mobileUi(BuildContext context) {
+    print("MAAAAC --- > ${widget.MAC}");
+    print("IPADDRESS --- > ${widget.IPADDRESS}");
     return WillPopScope(
       onWillPop: () async => true,
       child: SafeArea(
@@ -141,6 +148,7 @@ class _ConfigurationState extends ConsumerState<Configuration> {
           var data = ref.watch(tcpReceiveDataNotifier);
           return () {
             return data.id.when(data: (data) {
+              print("DATA---${data.toString()}");
               var finalResult = data.toString().split('\$');
               Future.delayed(const Duration(milliseconds: 15), () {
                 print("finalResult");
@@ -152,7 +160,7 @@ class _ConfigurationState extends ConsumerState<Configuration> {
                     finalResult.toString() != '[]' &&
                     finalResult.toString() != "[TimeOut]" &&
                     packId == finalResult[1]) {
-                  dismissProgressDialog();
+                 // dismissProgressDialog();
                   tempInt++;
                   if (tempInt == 1) {
                     try {
@@ -292,6 +300,14 @@ class _ConfigurationState extends ConsumerState<Configuration> {
                   });
                 }
               });
+
+              Future.delayed(Duration(seconds: 10),(){
+                if(isLoading == true){
+                  setState(() {
+                    isLoading = false;
+                  });
+                }
+              });
               return SingleChildScrollView(
                 child: Column(
                   children: [
@@ -383,20 +399,17 @@ class _ConfigurationState extends ConsumerState<Configuration> {
                                   const Text(
                                     "Communication Type : ",
                                     style: TextStyle(
-                                        fontSize: 20.0,
+                                        fontSize: 13.0,
                                         fontWeight: FontWeight.w700),
                                   ),
                                   Text(
                                     cType,
                                     style: const TextStyle(
-                                        fontSize: 20.0,
+                                        fontSize: 13.0,
                                         fontWeight: FontWeight.w600,
                                         color: Colors.red),
                                   ),
-                                  ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                        primary: Colors.blue,
-                                      ),
+                                  TextButton(
                                       onPressed: () {
                                         Navigator.pushReplacement(
                                           context,
@@ -406,7 +419,9 @@ class _ConfigurationState extends ConsumerState<Configuration> {
                                           ),
                                         );
                                       },
-                                      child: const Text("CHANGE")),
+                                      child: const Text(" >>CHANGE",style: TextStyle(
+                                        color: Colors.blue
+                                      ),)),
                                 ],
                               ),
                               Row(
@@ -414,30 +429,33 @@ class _ConfigurationState extends ConsumerState<Configuration> {
                                   const Text(
                                     "Heart Beat : ",
                                     style: TextStyle(
-                                        fontSize: 20.0,
+                                        fontSize: 13.0,
                                         fontWeight: FontWeight.w700),
                                   ),
                                   Text(
                                     cHearBeat,
                                     style: const TextStyle(
-                                        fontSize: 20.0,
+                                        fontSize: 13.0,
                                         fontWeight: FontWeight.w600,
                                         color: Colors.red),
                                   ),
                                 ],
+                              ),
+                              const SizedBox(
+                                height: 15,
                               ),
                               Row(
                                 children: [
                                   const Text(
                                     "Account Number : ",
                                     style: TextStyle(
-                                        fontSize: 20.0,
+                                        fontSize: 13.0,
                                         fontWeight: FontWeight.w700),
                                   ),
                                   Text(
                                     vAccNo,
                                     style: const TextStyle(
-                                        fontSize: 20.0,
+                                        fontSize: 13.0,
                                         fontWeight: FontWeight.w600,
                                         color: Colors.red),
                                   ),
@@ -448,7 +466,7 @@ class _ConfigurationState extends ConsumerState<Configuration> {
                         ),
                       ),
                     ),
-                    Padding(
+                  isLoading == false ?   Padding(
                       padding: const EdgeInsets.all(5.0),
                       child: Card(
                         elevation: 30,
@@ -855,6 +873,11 @@ class _ConfigurationState extends ConsumerState<Configuration> {
                                       primary: Colors.blue,
                                     ),
                                     onPressed: () {
+                                      setState(() {
+                                        isLoading = true;
+                                      });
+
+                                      Helper.Macaddress = widget.MAC!;
                                       final DateTime now = DateTime.now();
                                       final DateFormat dayformatter =
                                           DateFormat('dd:MM:yy');
@@ -963,6 +986,8 @@ class _ConfigurationState extends ConsumerState<Configuration> {
                                                   PacketControl.splitChar +
                                                   PacketControl.endPacket;
                                               packId = httpWrite;
+                                              Helper.Ipaddress = widget.IPADDRESS!;
+                                              print("MAINpACKET ===> $pck");
                                               ref
                                                   .read(tcpProvider)
                                                   .sendPackets(pck);
@@ -1028,14 +1053,15 @@ class _ConfigurationState extends ConsumerState<Configuration> {
                           ],
                         ),
                       ),
-                    ),
+                    ): Center(child: CircularProgressIndicator(),)
                   ],
                 ),
               );
             }, error: (error, txt) {
               return Text(txt.toString());
             }, loading: () {
-              return const CircularProgressIndicator();
+              return Center(child: const CircularProgressIndicator(
+              ));
             });
           }();
         })),
@@ -1113,24 +1139,6 @@ class _ConfigurationState extends ConsumerState<Configuration> {
     if(posturlController.text.isEmpty){
       return validatePopup("Post Url should not be empty");
     }
-    else if(geturlController.text.isEmpty){
-      return validatePopup("Get Url should not be empty");
-    }
-    else if(puturlController.text.isEmpty){
-      return validatePopup("Put Url should not be empty");
-    }
-    else if(heartbeatController.text.isEmpty){
-      return validatePopup("Heart beat should not be empty");
-    }
-    else if(heartbeatController.text.length != 4){
-      return validatePopup("Heart beat should be less than 9999 seconds");
-    }
-    else if(accountnoController.text.isEmpty){
-      return validatePopup("Account Number should not be empty");
-    }
-    else if(accountnoController.text.length != 5){
-      return validatePopup("Kindly enter the 5 digit valid Account Number");
-    }
     return true;
   }
 
@@ -1188,6 +1196,8 @@ class _ConfigurationState extends ConsumerState<Configuration> {
         PacketControl.iotModeWifi +
         PacketControl.splitChar +
         PacketControl.endPacket;
+    print("PACKET --- > $pck");
+    Helper.Ipaddress = widget.IPADDRESS!;
     ref.read(tcpProvider).sendPackets(pck);
   }
 
@@ -1323,7 +1333,7 @@ class _ConfigurationState extends ConsumerState<Configuration> {
     pr = ProgressDialog(context, type: ProgressDialogType.normal,
         isDismissible: false,
         showLogs: false);
-    pr.style(
+    pr!.style(
         message: 'Please wait...',
         borderRadius: 10.0,
         backgroundColor: Colors.white,
@@ -1337,12 +1347,12 @@ class _ConfigurationState extends ConsumerState<Configuration> {
         messageTextStyle: const TextStyle(
             color: Colors.black, fontSize: 19.0, fontWeight: FontWeight.w600)
     );
-    await pr.show();
+    await pr!.show();
 
   }
   dismissProgressDialog() async {
-    if(pr.isShowing()) {
-      pr.hide();
+    if(pr!.isShowing()) {
+      pr!.hide();
     }
   }
 
@@ -1354,7 +1364,7 @@ class _ConfigurationState extends ConsumerState<Configuration> {
         addUnitNotifier.notifier)
         .addUnit(
         UnitData(
-            JSON_ID: "05",
+            JSON_ID: "06",
             USER_ID: Helper.userIDValue,
             DATA: Unit(
               PORT: '5000',
@@ -1365,7 +1375,7 @@ class _ConfigurationState extends ConsumerState<Configuration> {
               MAC_ID: Helper.Macaddress.toUpperCase(),
               VERSION: finalResult[6],
               ISACTIVE: "1",
-
+              UNIT_ID:widget.unitID
             ))
     );
     Future.delayed(

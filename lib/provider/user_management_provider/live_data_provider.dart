@@ -23,7 +23,9 @@ class LiveDataNotifierProvider extends StateNotifier<LiveDataState> {
     state = _loading();
     final apiResponse = await ref.read(apiProvider).getLiveData(request);
     if (apiResponse.data!=null) {
+
       print(jsonDecode(jsonEncode(apiResponse.data)));
+
       final Map<String, dynamic> convertedData = jsonDecode(jsonEncode(apiResponse.data));
 
       state = _dataState(LiveDataSensors.fromJson(convertedData));

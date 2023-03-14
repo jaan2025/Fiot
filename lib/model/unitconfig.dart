@@ -33,6 +33,7 @@ class Unit {
   String VERSION;
   String LOCATION;
   dynamic ISACTIVE;
+  dynamic UNIT_ID;
 
   Unit({
     required this.IP,
@@ -43,6 +44,7 @@ class Unit {
     required this.VERSION,
     required this.LOCATION,
     required this.ISACTIVE,
+    this.UNIT_ID,
   });
 
   factory Unit.fromJson(Map<String, dynamic> json) => Unit(
@@ -54,6 +56,7 @@ class Unit {
     VERSION: json["VERSION"],
     LOCATION: json["LOCATION"],
     ISACTIVE: json["ISACTIVE"],
+    UNIT_ID: json["UNIT_ID"],
   );
 
   Map<String, dynamic> toJson() => {
@@ -65,5 +68,6 @@ class Unit {
     "VERSION": VERSION,
     "LOCATION": LOCATION,
     "ISACTIVE": ISACTIVE,
+    "UNIT_ID": UNIT_ID,
   };
 }

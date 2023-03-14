@@ -259,7 +259,7 @@ class _ProfileState extends ConsumerState<Profile> {
                                               Navigator.of(context).pushNamedAndRemoveUntil(
                                                   AppId.LoginID,
                                                       (Route<dynamic> route) => false);
-                                              Helper.logout = true;
+
                                             },
                                             child: const Padding(
                                               padding: EdgeInsets.only(
@@ -282,55 +282,7 @@ class _ProfileState extends ConsumerState<Profile> {
 
                                 ],
                               ),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                        top: 15.0, bottom: 10.0),
-                                    child: Consumer(
-                                        builder: (context, ref, child) {
-                                          return ElevatedButton(
-                                            style: ButtonStyle(
-                                                shadowColor: MaterialStateProperty
-                                                    .all(Colors.red),
-                                                backgroundColor: MaterialStateProperty
-                                                    .all(Colors.white),
-                                                shape: MaterialStateProperty
-                                                    .all<
-                                                    RoundedRectangleBorder>(
-                                                    RoundedRectangleBorder(
-                                                      borderRadius: BorderRadius
-                                                          .circular(18.0),
-                                                    )
-                                                )
-                                            ),
-                                            onPressed: () async {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(builder: (context) =>  AboutApp()),
-                                              );
-                                            },
-                                            child: const Padding(
-                                              padding: EdgeInsets.only(
-                                                  left: 15.0,
-                                                  right: 15.0,
-                                                  top: 8.0,
-                                                  bottom: 8.0),
-                                              child: Text('About App',
-                                                style: TextStyle(
-                                                    color: Colors.red),),
-                                            ),
-                                            /* style: ElevatedButton.styleFrom(
-                                                  minimumSize: Size.fromHeight(ScreenSize
-                                                      .screenHeight *
-                                                      0.07), // fromHeight use double.infinity as width and 40 is the height
-                                                ),*/
-                                          );
-                                        }),
-                                  ),
-                                ],
-                              ),
+
 
 
 

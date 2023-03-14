@@ -5,8 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:generic_iot_sensor/screens/configuration.dart';
 import 'package:generic_iot_sensor/screens/loadingScreen.dart';
+import 'package:generic_iot_sensor/sqflite/sqDatabase.dart';
 import 'package:network_info_plus/network_info_plus.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sqflite/sqflite.dart';
 import '../helper/helper.dart';
 import '../res/id.dart';
 
@@ -18,6 +20,8 @@ class SmartConfig extends StatefulWidget {
 }
 
 class _SmartConfigState extends State<SmartConfig> {
+
+
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   final TextEditingController ssid = TextEditingController();
   final TextEditingController bssid = TextEditingController();
@@ -32,10 +36,31 @@ class _SmartConfigState extends State<SmartConfig> {
   final TextEditingController portTarget = TextEditingController();
   final TextEditingController waitUdpReceiving = TextEditingController();
   final TextEditingController waitUdpSending = TextEditingController();
+
   final TextEditingController thresholdSucBroadcastCount =
       TextEditingController();
   ESPTouchPacket packet = ESPTouchPacket.broadcast;
   bool fetchingWifiInfo = false;
+
+  dynamic passwordSave = "";
+
+
+  saveWifiPassword(dynamic wPassword) async {
+    SharedPreferences pref = await SharedPreferences.getInstance();
+    pref.setString(Helper.Wifipassword, wPassword);
+  }
+
+  @override
+  void initState() {
+/*    if(password.text.isEmpty){
+      password.text = Helper.Wifipassword;
+      print(Helper.Wifipassword);
+      print(password.text);
+    }*/
+  wifiPass();
+  super.initState();
+  }
+
   @override
   void dispose() {
     ssid.dispose();
@@ -55,8 +80,16 @@ class _SmartConfigState extends State<SmartConfig> {
     super.dispose();
   }
 
+
+
   @override
   Widget build(BuildContext context) {
+    print("HELPERPASS---------->${Helper.Wifipassword}");
+     if(password.text.isEmpty){
+       Helper.Wifipassword = password.text;
+     }
+
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blue,
@@ -95,6 +128,7 @@ class _SmartConfigState extends State<SmartConfig> {
     } catch(e){
 
     }
+
   }
 
   createTask() {
@@ -127,9 +161,21 @@ class _SmartConfigState extends State<SmartConfig> {
     return result;
   }
 
+  void wifiPass(){
+    if(ssid.text != null && bssid.text != null){
+      print("falling........");
+      saveWifiPassword(password.text);
+      print(password.text);
+      Helper.Wifipassword = password.text;
+    }else{
+      print("not falling....");
+    }
+  }
+
   Widget form(BuildContext context) {
     print(fetchingWifiInfo);
     fetchWifiInfo();
+    wifiPass();
     Color color = Theme.of(context).primaryColor;
     return Form(
       key: formKey,
@@ -189,6 +235,7 @@ class _SmartConfigState extends State<SmartConfig> {
           Center(
             child: ElevatedButton(
               onPressed: () {
+                wifiPass();
                 if(ssid.text.isEmpty){
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                       content: Text("Connect to Wifi Network")));
@@ -205,7 +252,9 @@ class _SmartConfigState extends State<SmartConfig> {
                       builder: (context) => TaskRoute(task: createTask()),
                     ),
                   );
+
                 }
+
               },
               child: const Text('CONFIG',style: TextStyle(backgroundColor: Colors.blue),),
             ),
@@ -220,6 +269,7 @@ class _SmartConfigState extends State<SmartConfig> {
       this.packet = packet;
     });
   }
+
 }
 
 class TaskRoute extends StatefulWidget {
@@ -451,7 +501,7 @@ class TaskParameterDetails extends StatelessWidget {
   final TextEditingController thresholdSucBroadcastCount;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context)          {
     return ExpansionTile(
       title: Text(
         'Task parameter detail',

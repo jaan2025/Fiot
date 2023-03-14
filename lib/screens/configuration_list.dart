@@ -7,7 +7,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:generic_iot_sensor/model/user_devicess/user_devies_model.dart';
+import 'package:generic_iot_sensor/screens/configuration.dart';
 import 'package:generic_iot_sensor/screens/shimmerprojectlist.dart';
+import 'package:generic_iot_sensor/screens/wLwF.dart';
 import 'package:generic_iot_sensor/services/apiservices.dart';
 import 'package:generic_iot_sensor/services/tcpclient.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -40,7 +42,12 @@ class _ConfigurationListState extends ConsumerState<ConfigurationList> {
   String _scanBarcode = 'Unknown';
   int _selectedIndex = -1;
   List<String> str = [];
+  int _snackBar = 0;
 
+
+  var IP;
+  var MAC;
+  var UNIT_ID;
   @override
   void initState() {
     super.initState();
@@ -65,148 +72,214 @@ class _ConfigurationListState extends ConsumerState<ConfigurationList> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: true,
-        body: ref.watch(userDataNotifier(Helper.userIDValue)).when(data: (data) {
-          return SingleChildScrollView(
-            child: SizedBox(
-              child: Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top: 15.0, left: 15, right: 15),
-                      child: Row(
-                        children: [
-                          Text(
-                            'Configured devices',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: MediaQuery.of(context).size.width * 0.05),
-                          ),
+      resizeToAvoidBottomInset: false,
+      body: ref.watch(userDataNotifier(Helper.userIDValue)).when(data: (data) {
+        return  data.data == null  ? Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  CircularProgressIndicator()
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Text("No data found"),
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
 
-                         /* Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.only(left: 50),
-                                child: ElevatedButton(
+                  Text("Please check your network"),
 
-                                  onPressed: () {
-                                    String qrResult = '';
-                                    Future<String> scanValue = scanQR();
-                                    scanValue.then((value) {
-                                      Map valueMap = json.decode(value);
+                ],
+              )
+            ],
+          ),
+        ) : SingleChildScrollView(
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 15.0, left: 15, right: 15),
+                        child: Row(
+                          children: [
 
-                                      for (var mac in Helper.listOfMac) {
-                                        if (mac == valueMap['MacAddress']){
-                                          //goBack = false;
-                                          Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      AddEdgeDevice(valueMap: valueMap))
+                            data.data!.units!.isNotEmpty ?
+                            Text(
+                              'Configured devices',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: MediaQuery.of(context).size.width * 0.05),
+                            ):Text(
+                              'Please add the unit!!',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: MediaQuery.of(context).size.width * 0.05),
+                            ),
 
-                                          );
-                                        }
-                                        else {
-                                          print("MAC NOT MATCHED");
-                                        }
-                                        *//*if (goBack) {
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                  const SnackBar(content: Text('Invalid Qr')));
-                                            }*//*
-                                      }});
-                                  },
-                                  child: Text(' SCAN QR '),
-                                ),
-                              ),
+                            /* Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 50),
+                                      child: ElevatedButton(
 
-                            ],
-                          ),*/
-                        ],
+                                        onPressed: () {
+                                          String qrResult = '';
+                                          Future<String> scanValue = scanQR();
+                                          scanValue.then((value) {
+                                            Map valueMap = json.decode(value);
+
+                                            for (var mac in Helper.listOfMac) {
+                                              if (mac == valueMap['MacAddress']){
+                                                //goBack = false;
+                                                Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            AddEdgeDevice(valueMap: valueMap))
+
+                                                );
+                                              }
+                                              else {
+                                                print("MAC NOT MATCHED");
+                                              }
+                                              *//*if (goBack) {
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                        const SnackBar(content: Text('Invalid Qr')));
+                                                  }*//*
+                                            }});
+                                        },
+                                        child: Text(' SCAN QR '),
+                                      ),
+                                    ),
+
+                                  ],
+                                ),*/
+                          ],
+                        ),
+
                       ),
 
-                    ),
+                    ],
+                  ),
+                ],
+              ),
+              /*   Row(
+                  children: [
                     Visibility(
                         visible: data.data!.units!.isEmpty ? true : false,
                         child: Expanded(
                             child: Center(
                                 child: const Text(
-                          'No Unit, Found Please the Unit',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        )))),
-                    ListView.builder(
-                      physics: ScrollPhysics(),
-                       //scrollDirection: Axis.vertical,
-                        shrinkWrap: true,
-                        itemCount: data.data!.units!.length,
-                        itemBuilder: (context, index) {
-                          return Visibility(
-                              child:   InkWell(
-                                onTap: (){
-                                  PopUp(index,data.data!.units![index]);
+                                  'No Unit, Found Please the Unit',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                )))),
+                  ],
+                ),*/
+              ListView.builder(
+                  physics: ScrollPhysics(),
+                  scrollDirection: Axis.vertical,
+                  shrinkWrap: true,
+                  itemCount: data.data!.units!.length,
+                  itemBuilder: (context, index) {
+                    if(data.data != null){
 
-                                },
-                                child: Card(
+                    }
+                    return Visibility(
+                        child:   InkWell(
+                          onTap: (){
+                            PopUp(index,data.data!.units![index]);
+
+                          },
+                          child:Card(
                             elevation: 20,
                             child: Padding(
-                                padding: const EdgeInsets.only(left: 5),
-                                child:Column(
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Text("IP : "),
-                                        Text(data.data!.units![index].ip.toString())
-                                      ],
-                                    ),SizedBox(
-                                      height: 15,
-                                    ),
-                                    Row(
-                                      children: [
-                                        Text("MAC : "),
-                                        Text(data.data!.units![index].macId.toString())
-                                      ],
-                                    ),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                      children: [
-                                        Text("PORT: ${data.data!.units![index].port.toString()}"),
-                                        Expanded(
-                                            child: Padding(
-                                              padding: const EdgeInsets.only(left: 200),
-                                              child: IconButton(onPressed: (){
+                              padding: const EdgeInsets.only(left: 5),
+                              child:Column(
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text("IP : ",style: TextStyle(
+                                          fontWeight: FontWeight.bold
+                                      ),),
+                                      Text(data.data!.units![index].ip.toString())
+                                    ],
+                                  ),SizedBox(
+                                    height: 15,
+                                  ),
+                                  Row(
+                                    children: [
+                                      Text("MAC : ",
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold
+                                        ),),
+                                      Text(data.data!.units![index].macId.toString())
+                                    ],
+                                  ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                    children: [
+                                      Text("PORT: ${data.data!.units![index].port.toString()
+                                      }",
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold
+                                        ),
+                                      ),
+                                      Expanded(
+                                          child: Padding(
+                                            padding: const EdgeInsets.only(left: 200),
+                                            child: IconButton(onPressed: (){
 
-                                                ConfirmPopup(data.data!.units![index]);
+                                              ConfirmPopup(data.data!.units![index]);
 
-                                              }, icon: Icon(Icons.delete)),
-                                            )
-                                        )
-                                      ],
-                                    ),
+                                            }, icon: Icon(Icons.delete)),
+                                          )
+                                      )
+                                    ],
+                                  ),
 
-                                  ],
-                                ),
+
+
+                                ],
+                              ),
                             ),
                           ),
-                              ));
-                          // return getConfigList(index, config);
-                        }),
-                  ],
-                ),
-            ),
-          );
-        }, error: (error, s) {
-          return Center(
-            child: Text(error.toString()),
-          );
-        }, loading: () {
-          return ShimmerForProjectList();
-        }),
-        floatingActionButton: FloatingActionButton(
-            elevation: 0.0,
-            child: const Icon(Icons.add),
-            onPressed: () {
-              Navigator.of(context).pushNamed(AppId.SmartConfigID);
-            }),floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,);
-    }
+                        ));
+                    // return getConfigList(index, config);
+                  })
+            ],
+          ),
+        );
+      }, error: (error, s) {
+        return Center(
+          child: Text(error.toString()),
+        );
+      }, loading: () {
+        return ShimmerForProjectList();
+      }),
+      floatingActionButton: FloatingActionButton(
+          elevation: 0.0,
+          child: const Icon(Icons.add),
+          onPressed: () {
+            Navigator.of(context).pushNamed(AppId.SmartConfigID);
+            /*   Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) =>
+                        wLwF()),
+              );*/
+          }),floatingActionButtonLocation: FloatingActionButtonLocation.miniCenterDocked,);
+  }
 
   Future<bool> connectToServer(String ipaddress, int port) async {
     if (prevIP.isNotEmpty && prevIP == ipaddress) {
@@ -217,7 +290,7 @@ class _ConfigurationListState extends ConsumerState<ConfigurationList> {
     prevIP = ipaddress;
     return Future.delayed(
         const Duration(milliseconds: 500),
-        () => Socket.connect(ipaddress, 5000,
+            () => Socket.connect(ipaddress, 5000,
             timeout: const Duration(seconds: 10))).then((socket) {
       clientSocket = socket;
       return true;
@@ -228,66 +301,72 @@ class _ConfigurationListState extends ConsumerState<ConfigurationList> {
   }
 
   void PopUp(int index,UserUnit device){
-     showDialog(
-      context: context,
-      builder: (ctx) => SizedBox(
-        height: 20,
-       width: 40,
+    IP = device.ip;
+    MAC = device.macId;
+    UNIT_ID = device.unitId;
+    showDialog(
+        context: context,
+        builder: (ctx) => SizedBox(
+          height: 20,
+          width: 40,
 
-       child: AlertDialog(
-         title: Text("MACID: ${device.macId.toString()}",style: TextStyle(
-           fontSize: 16
-         ),),
-          content:
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  ElevatedButton(
+          child: AlertDialog(
+            title: Text("MACID: ${device.macId.toString()}",style: TextStyle(
+                fontSize: 16
+            ),),
+            content:
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
 
-                    onPressed: () {
-                      String qrResult = '';
-                      Future<String> scanValue = scanQR();
-                      scanValue.then((value) {
-                        Map valueMap = json.decode(value);
+                  onPressed: () {
+                    String qrResult = '';
+                    Future<String> scanValue = scanQR();
+                    scanValue.then((value) {
+                      Map valueMap = json.decode(value);
 
-                        for (var mac in Helper.listOfMac) {
-                          print(Helper.listOfMac);
-                          if (mac == valueMap['MacAddress']){
-                            // goBack = false;
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        AddEdgeDevice(valueMap: valueMap))
+                      for (var mac in Helper.listOfMac) {
+                        print(Helper.listOfMac);
+                        if (mac == valueMap['MacAddress']){
 
-                            );
-                          }
-                          else {
-                            print("MAC NOT MATCHED");
-                          }
-                          /*if (goBack) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                              const SnackBar(content: Text('Invalid Qr')));
-                                        }*/
-                        }});
-                    },
-                    child: Text('SCAN QR '),
-                  ),
-                  ElevatedButton(
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      AddEdgeDevice(valueMap: valueMap))
+                          );
+                        }
+                        else {
+                          print("MAC NOT MATCHED");
+                        if(_snackBar == 0){
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("PLEASE TRY AGAIN..")));
+                          _snackBar++;
+                        }
+                        }
+                      }});
+                  },
+                  child: Text('SCAN QR '),
+                ),
+                ElevatedButton(
 
-                    onPressed: () {
-                      Navigator.of(context).pushNamed(
-                          AppId.Configuration);
-                    },
-                    child: Text('CONFIG'),
-                  ),
-                ],
-              ),
+                  onPressed: () {
+                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>Configuration(
+                    IPADDRESS: IP,
+                    MAC: MAC,
+                    unitID: UNIT_ID,
+
+                  )));
+                  },
+                  child: Text('CONFIG'),
+                ),
+              ],
+            ),
 
 
 
-        ),
-      )
+          ),
+        )
     );
 
 
@@ -296,63 +375,63 @@ class _ConfigurationListState extends ConsumerState<ConfigurationList> {
   void ConfirmPopup( UserUnit finalResult){
     print("confirm");
 
-        showDialog(
-            context: context,
-            builder: (ctx) => SizedBox(
-              height: 20,
-              width: 40,
-              child: AlertDialog(
-                title: Text("CONFIRM ??",style: TextStyle(fontSize: 16),),
-                content:
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    ElevatedButton(
-                      onPressed: () {
-                        ref.read(addUnitNotifier.notifier).addUnit(UnitData(
-                            JSON_ID: "05",
-                            USER_ID: Helper.userIDValue,
-                            DATA: Unit(
-                                PORT: '5000',
-                                IP: finalResult.ip!,
-                                COMMUNICATION_ID: finalResult.communicationId!,
-                                LOCATION: finalResult.location!,
-                                KEEPALIVE_TIME: finalResult.keepaliveTime!,
-                                MAC_ID: finalResult.macId.toString().toUpperCase(),
-                                VERSION: finalResult.version!,
-                                ISACTIVE: "0"
+    showDialog(
+        context: context,
+        builder: (ctx) => SizedBox(
+          height: 20,
+          width: 40,
+          child: AlertDialog(
+            title: Text("CONFIRM ??",style: TextStyle(fontSize: 16),),
+            content:
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    ref.read(addUnitNotifier.notifier).addUnit(UnitData(
+                        JSON_ID: "05",
+                        USER_ID: Helper.userIDValue,
+                        DATA: Unit(
+                            PORT: '5000',
+                            IP: finalResult.ip!,
+                            COMMUNICATION_ID: finalResult.communicationId!,
+                            LOCATION: finalResult.location!,
+                            KEEPALIVE_TIME: finalResult.keepaliveTime!,
+                            MAC_ID: finalResult.macId.toString().toUpperCase(),
+                            VERSION: finalResult.version!,
+                            ISACTIVE: "0"
 
-                            )));
-                        Future.delayed(
-                          const Duration(milliseconds: 200),
-                              () {
+                        )));
+                    Future.delayed(
+                      const Duration(milliseconds: 200),
+                          () {
 
-                            ScaffoldMessenger.of(context)
-                                .showSnackBar(SnackBar(content: Text("Deleted Successfully")));
+                        ScaffoldMessenger.of(context)
+                            .showSnackBar(SnackBar(content: Text("Deleted Successfully")));
 
-                            Navigator.pop(context);
-                            ref.refresh(userDataNotifier(Helper.userIDValue));
-                          },
-                        );
-
-                      },
-                      child: Text('YES'),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
                         Navigator.pop(context);
-                        /* Navigator.of(context).pushNamed(
-                        AppId.Configuration);*/
+                        ref.refresh(userDataNotifier(Helper.userIDValue));
                       },
-                      child: Text('NO'),
-                    ),
-                  ],
+                    );
+
+                  },
+                  child: Text('YES'),
                 ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    /* Navigator.of(context).pushNamed(
+                        AppId.Configuration);*/
+                  },
+                  child: Text('NO'),
+                ),
+              ],
+            ),
 
 
-              ),
-            )
-        );
+          ),
+        )
+    );
 
 
 

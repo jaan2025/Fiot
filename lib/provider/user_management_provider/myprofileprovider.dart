@@ -1,6 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:generic_iot_sensor/model/user.dart';
-
 import '../../model/response_data.dart';
 import '../../services/apiservices.dart';
 import '../../state/adduserstate.dart';

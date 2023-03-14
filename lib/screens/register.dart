@@ -7,12 +7,17 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:generic_iot_sensor/helper/applicationhelper.dart';
 import 'package:generic_iot_sensor/provider/user_management_provider/otpprovider.dart';
+import 'package:generic_iot_sensor/screens/login.dart';
+import 'package:generic_iot_sensor/screens/otpVerification.dart';
+import 'package:otp_text_field/otp_field.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:otp_autofill/otp_autofill.dart';
+import 'package:telephony/telephony.dart';
 import '../helper/helper.dart';
 import '../model/otp.dart';
 import '../model/response_data.dart';
 import '../model/user.dart';
+import '../provider/user_management_provider/loginnotifier.dart';
 import '../provider/user_management_provider/userprovider.dart';
 import '../res/colors.dart';
 import '../res/id.dart';
@@ -20,6 +25,7 @@ import '../res/screensize.dart';
 import '../responsive/responsive.dart';
 import 'package:regexed_validator/regexed_validator.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+
 
 final loginPasswordToggle = StateProvider<bool>((ref) => true);
 
@@ -32,10 +38,16 @@ class Register extends ConsumerStatefulWidget {
 }
 
 class _SignupState extends ConsumerState<Register> {
-  final usernameController = TextEditingController(text: '');
-  final mobileController = TextEditingController(text: '');
-  final passwordController = TextEditingController(text: '');
-  final mailController = TextEditingController(text: '');
+  final usernameController = TextEditingController();
+  final mobileController = TextEditingController();
+  final passwordController = TextEditingController();
+  final mailController = TextEditingController();
+
+  Telephony telephony = Telephony.instance;
+  TextEditingController otpbox = TextEditingController();
+
+  String otpControl = "";
+
 
   final TextEditingController _fieldOne = TextEditingController();
   final TextEditingController _fieldTwo = TextEditingController();
@@ -44,15 +56,22 @@ class _SignupState extends ConsumerState<Register> {
   final TextEditingController _fieldFive = TextEditingController();
   final TextEditingController _fieldSix = TextEditingController();
 
-  bool canLogin = false;
 
+  final _formKey = GlobalKey<FormState>();
+
+  bool canLogin = false;
+  bool AlertBox = false;
+
+  List<dynamic> MobileNo = [];
+  var message;
 
   @override
-  initState()  {
+  void initState() {
+   Helper.classes = "Register";
     super.initState();
   }
 
-
+   int onceBuild = 0;
 
   String? verificationCode;
 
@@ -101,8 +120,8 @@ class _SignupState extends ConsumerState<Register> {
     }
     return true;
   }
-
-  saveUserDetails(String username, String mobileno,String password,String mail, ) async {
+ var response;
+  saveUserDetails(String username, String mobileno,String password,String mail) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setString(Helper.userName, username);
     prefs.setString(Helper.mobile, mobileno);
@@ -110,6 +129,8 @@ class _SignupState extends ConsumerState<Register> {
     prefs.setString(Helper.email, mail);
 
   }
+
+
 
   windowsUi(BuildContext context) {
     return Consumer(builder: (context, ref, child)
@@ -510,93 +531,37 @@ class _SignupState extends ConsumerState<Register> {
   }
 
   mobileUi(BuildContext context) {
+    print("REGISTERPAGE");
     return Consumer(builder: (context, ref, child)
     {
       Future.delayed(
           const Duration(seconds: 1), () {
-        ApplicationHelper.dismissProgressDialog();
+       // ApplicationHelper.dismissProgressDialog();
         var state = ref.watch(addUserNotifier);
         state.id.when(data: (data) {
           try {
-            var response = json.decode(data);
+             response = json.decode(data);
+
             Future.delayed(
               const Duration(milliseconds: 500),
                   () {
                 String userID = response['USER_ID'];
+                Helper.userId = userID;
                 print("popup $userID");
-                var otpReceived = response['DATA']['OTP'];
-                showDialog(
-                  context: context,
-                  builder: (ctx) =>
-                      AlertDialog(
-                        insetPadding: const EdgeInsets.only(
-                            left: 12.0, right: 12.0),
-                        titlePadding: const EdgeInsets.all(20.0),
-                        title: const Text("Please enter your OTP"),
-                        content: Builder(
-                            builder: (context) {
-                              return Container(
-                                width: ScreenSize.screenWidth * 400,
-                                //height:  ScreenSize.screenHeight * 1,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                  children: [
-                                    OtpInput(_fieldOne, true),
-                                    OtpInput(_fieldTwo, false),
-                                    OtpInput(_fieldThree, false),
-                                    OtpInput(_fieldFour, false),
-                                    OtpInput(_fieldFive, false),
-                                    OtpInput(_fieldSix, false)
-                                  ],
-                                ),
-                              );
-                            }
-                        ),
-                        actions: <Widget>[
-                          TextButton(
-                            onPressed: () {
-                              String firststOTP = _fieldOne.text;
-                              String secondOTP = _fieldTwo.text;
-                              String thirdOTP = _fieldThree.text;
-                              String fourthOTP = _fieldFour.text;
-                              String fifthOTP = _fieldFive.text;
-                              String sixthOTP = _fieldSix.text;
-                              String otpGiven = firststOTP + secondOTP + thirdOTP +
-                                  fourthOTP + fifthOTP + sixthOTP;
-                              if (_fieldOne.text.isEmpty ||
-                                  _fieldTwo.text.isEmpty ||
-                                  _fieldThree.text.isEmpty || _fieldFour.text
-                                  .isEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text(
-                                        'OTP fields should not be empty ')));
-                              } else if (otpGiven != otpReceived) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content: Text('Enter valid OTP')));
-                              } else {
-                                print("otp $userID");
-                                verifyOTP(userID);
-                              }
-                              print(_fieldOne.text + _fieldTwo.text +
-                                  _fieldThree.text + _fieldFour.text +
-                                  _fieldFive.text + _fieldSix.text);
+                print("RESPONSEssssssssssss ====> $response");
+               Helper.otpRecived = response['DATA']['OTP'];
+                 message = response['DATA']['MSG'];
+                 print("MMMMMMMM == > $message ");
+                 if(message == "Mobile Number is Already Exsist"){
+                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Mobile Number already exist")));
+                   ApplicationHelper.dismissProgressDialog();
+                   print("find me");
+                 }else {
+                  if(Helper.classes == "New register" && AlertBox != false && onceBuild == 0){
+                   Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>otpVerification()));
+                  }
+                 }
 
-                              _fieldOne.clear();
-                              _fieldTwo.clear();
-                              _fieldThree.clear();
-                              _fieldFour.clear();
-                              _fieldFive.clear();
-                              _fieldSix.clear();
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.all(14),
-                              child: const Text("OK"),
-                            ),
-                          ),
-                        ],
-                      ),
-                );
               },
             );
           } catch(e){
@@ -612,6 +577,7 @@ class _SignupState extends ConsumerState<Register> {
       });
       return SafeArea(
           child: Scaffold(
+              //resizeToAvoidBottomInset: false,
               backgroundColor: AppColors.white,
               body: SingleChildScrollView(
                 child: Consumer(builder: (context, ref, child) {
@@ -623,181 +589,178 @@ class _SignupState extends ConsumerState<Register> {
                         Column(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
+
                             Padding(
                               padding: const EdgeInsets.only(
                                   bottom: 15.0, left: 4.0, right: 4.0),
                               child: Padding(
                                 padding: const EdgeInsets.all(15.0),
-                                child: Card(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(30.0),),
-                                  color: Colors.white,
-                                  shadowColor: Colors.blueGrey,
-                                  elevation: 30,
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(10.0),
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: Row(
-                                            mainAxisAlignment: MainAxisAlignment
-                                                .center,
-                                            children: [
-                                              Text("Lets get Started!",
-                                                  style: TextStyle(
-                                                      fontSize:
-                                                      ScreenSize.screenWidth *
-                                                          0.07,
-                                                      color: AppColors.secondary,
-                                                      fontWeight: FontWeight.bold)),
-                                            ],
-                                          ),
-                                        ),
-                                        Padding(
-                                          padding: const EdgeInsets.only(top: 15.0),
-                                          child: TextField(
-                                            textInputAction: TextInputAction.next,
-                                            controller: usernameController,
-                                            decoration: InputDecoration(
-                                              prefixIcon: const Icon(
-                                                  Icons.account_circle_rounded),
-                                              border: OutlineInputBorder(
-                                                borderRadius: BorderRadius.circular(
-                                                    15.0),
-                                              ),
-                                              filled: true,
-                                              labelText: 'Username',
-                                              hintText: 'Enter your Username',
-                                            ),
-                                          ),
-                                        ),
-                                        Padding(
-                                          padding: const EdgeInsets.only(top: 15.0),
-                                          child: TextField(
-                                            textInputAction: TextInputAction.next,
-                                            controller: mobileController,
-                                            keyboardType: TextInputType.number,
-                                            inputFormatters: [
-                                              LengthLimitingTextInputFormatter(10)
-                                            ],
-                                            decoration: InputDecoration(
-                                              prefixIcon: const Icon(
-                                                  Icons.phone),
-                                              border: OutlineInputBorder(
-                                                borderRadius: BorderRadius.circular(
-                                                    15.0),
-                                              ),
-                                              filled: true,
-                                              labelText: 'Mobile Number',
-                                              hintText: 'Enter your Mobile Number',
-                                            ),
-                                          ),
-                                        ),
-
-
-                                        Padding(
-                                          padding: const EdgeInsets.only(top: 10.0),
-                                          child: TextField(
-                                            controller: passwordController,
-                                            textInputAction: TextInputAction.next,
-                                            obscureText:
-                                            ref.watch(loginPasswordToggle),
-                                            decoration: InputDecoration(
-                                              border: OutlineInputBorder(
-                                                borderRadius: BorderRadius.circular(
-                                                    15.0),
-                                              ),
-                                              filled: true,
-                                              labelText: 'Password',
-                                              hintText: 'Enter your password',
-                                              prefixIcon: InkWell(
-                                                onTap: () {
-                                                  ref
-                                                      .read(loginPasswordToggle
-                                                      .notifier)
-                                                      .state =
-                                                  !ref.watch(
-                                                      loginPasswordToggle);
-                                                },
-                                                child: Icon(
-                                                  ref.watch(loginPasswordToggle) ==
-                                                      true
-                                                      ? Icons.visibility
-                                                      : Icons.visibility_off,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        Padding(
-                                          padding: const EdgeInsets.only(top: 15.0),
-                                          child: TextField(
-                                            textInputAction: TextInputAction.done,
-                                            controller: mailController,
-                                            decoration: InputDecoration(
-                                              prefixIcon: const Icon(
-                                                  Icons.mail),
-                                              border: OutlineInputBorder(
-                                                borderRadius: BorderRadius.circular(
-                                                    15.0),
-                                              ),
-                                              filled: true,
-                                              labelText: 'Email',
-                                              hintText: 'Enter your Email',
-                                            ),
-                                          ),
-                                        ),
-
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                              top: 15.0, bottom: 10.0),
-                                          child: Consumer(
-                                              builder: (context, ref, child) {
-                                                return ElevatedButton(
-                                                  style: ButtonStyle(
-                                                      shadowColor: MaterialStateProperty
-                                                          .all(Colors.red),
-                                                      backgroundColor: MaterialStateProperty
-                                                          .all(Colors.white),
-                                                      shape: MaterialStateProperty
-                                                          .all<
-                                                          RoundedRectangleBorder>(
-                                                          RoundedRectangleBorder(
-                                                            borderRadius: BorderRadius
-                                                                .circular(18.0),
-                                                          )
-                                                      )
-                                                  ),
-                                                  onPressed: () async {
-                                                    if (validateRegisterField()) {
-                                                      canLogin = true;
-                                                      registerNewUser();
-
-                                                    }
-                                                  },
-                                                  child: const Padding(
-                                                    padding: EdgeInsets.only(
-                                                        left: 15.0,
-                                                        right: 15.0,
-                                                        top: 8.0,
-                                                        bottom: 8.0),
-                                                    child: Text('CREATE',
-                                                      style: TextStyle(
-                                                          color: Colors.red),),
-                                                  ),
-                                                  /* style: ElevatedButton.styleFrom(
-                                                  minimumSize: Size.fromHeight(ScreenSize
-                                                      .screenHeight *
-                                                      0.07), // fromHeight use double.infinity as width and 40 is the height
-                                                ),*/
-                                                );
-                                              }),
-                                        ),
-                                      ],
+                                child: Padding(
+                                  padding: const EdgeInsets.all(10.0),
+                                  child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment
+                                            .center,
+                                        children: [
+                                          Text("SIGN UP",
+                                              style: TextStyle(
+                                                  fontSize:
+                                                  ScreenSize.screenWidth *
+                                                      0.07,
+                                                  color: AppColors.secondary,
+                                                  fontWeight: FontWeight.bold)),
+                                        ],
+                                      ),
                                     ),
-                                  ),
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 15.0),
+                                      child: TextField(
+                                        textInputAction: TextInputAction.next,
+                                        controller: usernameController,
+                                        decoration: InputDecoration(
+                                          suffixIcon: const Icon(
+                                              Icons.account_circle_rounded, color: Colors.black,),
+
+                                          labelText: 'Username',
+                                          hintText: 'Enter your Username',
+                                        ),
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 15.0),
+                                      child: TextField(
+                                        textInputAction: TextInputAction.next,
+                                        controller: mobileController,
+                                        keyboardType: TextInputType.number,
+                                        inputFormatters: [
+                                          LengthLimitingTextInputFormatter(10)
+                                        ],
+                                        decoration: InputDecoration(
+                                          suffixIcon: const Icon(
+                                              Icons.phone, color: Colors.black,),
+
+
+                                          labelText: 'Mobile Number',
+                                          hintText: 'Enter your Mobile Number',
+                                        ),
+                                      ),
+                                    ),
+
+
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 10.0),
+                                      child: TextField(
+                                        controller: passwordController,
+                                        textInputAction: TextInputAction.next,
+                                        obscureText:
+                                        ref.watch(loginPasswordToggle),
+                                        decoration: InputDecoration(
+
+
+                                          labelText: 'Password',
+                                          hintText: 'Enter your password',
+                                          suffixIcon: InkWell(
+                                            onTap: () {
+                                              ref
+                                                  .read(loginPasswordToggle
+                                                  .notifier)
+                                                  .state =
+                                              !ref.watch(
+                                                  loginPasswordToggle);
+                                            },
+                                            child: Icon(
+                                              ref.watch(loginPasswordToggle) ==
+                                                  true
+                                                  ? Icons.visibility
+                                                  : Icons.visibility_off,color: Colors.black,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 15.0),
+                                      child: TextField(
+                                        textInputAction: TextInputAction.done,
+                                        controller: mailController,
+                                        decoration: InputDecoration(
+                                          suffixIcon: const Icon(
+                                              Icons.mail, color: Colors.black,),
+
+                                          labelText: 'Email',
+                                          hintText: 'Enter your Email',
+                                        ),
+                                      ),
+                                    ),
+
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                          top: 15.0, bottom: 10.0),
+                                      child:  SizedBox(
+                                        width: 500,
+                                        child: ElevatedButton(
+                                          style: ButtonStyle(
+                                              shadowColor: MaterialStateProperty
+                                                  .all(Colors.white),
+                                              backgroundColor: MaterialStateProperty
+                                                  .all(Colors.black),
+                                              shape: MaterialStateProperty
+                                                  .all<
+                                                  RoundedRectangleBorder>(
+                                                  RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius
+                                                        .circular(8.0),
+                                                  )
+                                              )
+                                          ),
+                                          onPressed: () async {
+
+
+
+
+
+
+                                            saveUserDetails(Helper.userName,Helper.mobile, Helper.password, Helper.email);
+
+
+
+                                            /*if(msg["DATA"]["MSG"] =="Mobile Number is Already Exsist"){
+                                              ScaffoldMessenger.of(context)
+                                                  .showSnackBar(SnackBar(content: Text("Mobile number already exist!!!")));
+                                            }*/
+                                            if (validateRegisterField()) {
+                                              canLogin = true;
+                                              registerNewUser();
+                                              //verifyOTP(Helper.userId);
+
+
+                                            }
+                                          },
+                                          child: const Padding(
+                                            padding: EdgeInsets.only(
+                                                left: 15.0,
+                                                right: 15.0,
+                                                top: 8.0,
+                                                bottom: 8.0),
+                                            child: Text('SUBMIT',
+                                              style: TextStyle(
+                                                  color: Colors.white),),
+                                          ),
+                                          /* style: ElevatedButton.styleFrom(
+                                                minimumSize: Size.fromHeight(ScreenSize
+                                                    .screenHeight *
+                                                    0.07), // fromHeight use double.infinity as width and 40 is the height
+                                              ),*/
+                                        ),
+                                      ),
+
+                                    ),
+                                  ],
+                                  )
                                 ),
                               ),
                             ),
@@ -806,15 +769,52 @@ class _SignupState extends ConsumerState<Register> {
                         Positioned(
                           //top: ScreenSize.screenHeight * 0.525,
                           bottom: ScreenSize.screenHeight * 0.55,
-                          right: ScreenSize.screenWidth * 0.13,
+                          right: ScreenSize.screenWidth * 0.19,
                           child: SizedBox(
-                              width: ScreenSize.screenWidth * 0.68,
+                              width: ScreenSize.screenWidth * 0.65,
                               height: ScreenSize.screenHeight * 0.5,
                               child: Image(
                                   width: ScreenSize.screenWidth * 0.65,
                                   image: const AssetImage(
-                                      'assets/images/rax_logo.png'))),
+                                      'assets/images/3293465.jpg'))),
                         ),
+                        Positioned(
+                          //top: ScreenSize.screenHeight * 0.525,
+                          bottom: ScreenSize.screenHeight * 0.42,
+                          right: ScreenSize.screenWidth * 0.16,
+                          child: SizedBox(
+                              width: ScreenSize.screenWidth * 0.35,
+                              height: ScreenSize.screenHeight * 0.5,
+                              child: Image(
+                                  width: ScreenSize.screenWidth * 0.65,
+                                  image: const AssetImage(
+                                      'assets/images/5500661.jpg'))),
+                        ),
+                        Positioned(
+                          //top: ScreenSize.screenHeight * 0.525,
+                          bottom: ScreenSize.screenHeight * 0.46,
+                          right: ScreenSize.screenWidth * 0.65,
+                          child: SizedBox(
+                              width: ScreenSize.screenWidth * 0.24,
+                              height: ScreenSize.screenHeight * 0.5,
+                              child: Image(
+                                  width: ScreenSize.screenWidth * 0.65,
+                                  image: const AssetImage(
+                                      'assets/images/4957136.jpg'))),
+                        ),
+                        Positioned(
+                          //top: ScreenSize.screenHeight * 0.525,
+                          bottom: ScreenSize.screenHeight * 0.89,
+                          right: ScreenSize.screenWidth * 0.85,
+                          child:  SizedBox(
+
+                              child: Card(
+                              elevation: 0,
+                              child: IconButton(onPressed: (){
+                                Navigator.pop(context);
+                              }, icon: Icon(Icons.arrow_back)))),
+                        ),
+
                         /*Positioned(
                         top: ScreenSize.screenHeight * 0.01,
                         left: ScreenSize.screenWidth * 0.01,
@@ -902,69 +902,28 @@ class _SignupState extends ConsumerState<Register> {
               ISACTIVE: '1',
             ))
     );
-
-  }
-
-  verifyOTP(String userID){
-    ApplicationHelper.showProgressDialog(context);
-    print("verifyotp $userID");
-    ref.read(
-        otpNotifier.notifier)
-        .otpVerify(OTPVerify(JSON_ID: "03", USER_ID: userID, DATA: OTPDataResponse(OTP_VERIFY: "1"))
-    );
-
-    Future.delayed(
-        const Duration(seconds: 1), ()
-    {
-      ApplicationHelper.dismissProgressDialog();
-      print("otprespose");
-      var state = ref.watch(otpNotifier);
-      state.id.when(data: (data) {
-        try {
-          var response = json.decode(data);
-          Future.delayed(
-            const Duration(milliseconds: 200),
-                () {
-              if (response['DATA']['MSG'] ==
-                  'Mobile Number is Already Exsist') {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                        content: Text(response['DATA']['MSG'])));
-              } else {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                        content: Text(response['DATA']['MSG'])));
-                Navigator.of(context)
-                    .pushNamedAndRemoveUntil(
-                    AppId.LoginID,
-                        (Route<dynamic>
-                    route) =>
-                    false);
-              }
-            },
-          );
-        } catch(e){
-          ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                  content: Text(data)));
-        }
-      },error: (error, s) {
-
-      }, loading: () {
-
-      });
-
+    setState(() {
+      AlertBox = true;
+      Helper.classes = "New register";
+     Future.delayed(Duration(seconds: 7),(){
+       onceBuild++;
+     });
     });
+
   }
+
+
+
+
 
 }
 
-class OtpInput extends StatelessWidget {
+/*class OtpInput extends StatelessWidget {
   final TextEditingController controller;
   final bool autoFocus;
-  const OtpInput(this.controller, this.autoFocus, {Key? key}) : super(key: key);
+   OtpInput(this.controller, this.autoFocus, {Key? key}) : super(key: key);
+
+ // TextEditingController otpbox = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -975,7 +934,7 @@ class OtpInput extends StatelessWidget {
         autofocus: autoFocus,
         textAlign: TextAlign.center,
         keyboardType: TextInputType.number,
-        controller: controller,
+        controller:controller,
         maxLength: 1,
         cursorColor: Theme.of(context).primaryColor,
         decoration: const InputDecoration(
@@ -991,5 +950,5 @@ class OtpInput extends StatelessWidget {
     );
   }
 
-}
+}*/
 

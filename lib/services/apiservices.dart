@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
-
+import 'package:http/http.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:generic_iot_sensor/model/locationrequest.dart';
@@ -26,8 +26,9 @@ class DioClient {
           BaseOptions(
             baseUrl: HttpServices.baseUrl,
             connectTimeout: 10000,
-            receiveTimeout: 20000,
+            receiveTimeout: 1000000,
             responseType: ResponseType.json,
+
           ),
         );
 
@@ -86,7 +87,7 @@ class DioClient {
     }
   }
 
-  Future<dynamic> Login( var user) async {
+  Future<dynamic> Login(var user) async {
     print("loginUser");
     try {
       final response = await _dio.post(HttpServices.userLogin, data: jsonEncode(user),
@@ -139,8 +140,9 @@ class DioClient {
       return e.toString();
     }
   }
+
   Future<UserDeviceList> getUserInfo({required String userId}) async {
-    print(userId);
+    print("userId====>${userId}");
     try {
       final response = await _dio.get("${HttpServices.userRegister}/ByID?USER_ID=$userId", options : Options(headers: {
         HttpHeaders.contentTypeHeader: "application/json",
@@ -149,8 +151,10 @@ class DioClient {
       print(response.data.toString());
       return UserDeviceList.fromJson(convertedData);
     } on DioError catch (err) {
+      print("Exception1 ${err.toString()}");
       return UserDeviceList();
     } catch (e) {
+      print("Exception2 ${e.toString()}");
       return UserDeviceList();
     }
   }
@@ -171,8 +175,6 @@ class DioClient {
       return 'e';
     }
   }
-
-
 
   Future<dynamic> getWeather(var lat, var loc) async {
     String formUrl = 'https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$loc&hourly=temperature_2m';
@@ -273,7 +275,6 @@ class DioClient {
   }
 
   Future<String> addEdDevices(var value) async {
-
     try {
       final response = await _dio.post(HttpServices.EdgeDevice, data: jsonEncode(value), options : Options(headers: {
         HttpHeaders.contentTypeHeader: "application/json",
@@ -287,7 +288,4 @@ class DioClient {
       return e.toString();
     }
   }
-
-
-
 }

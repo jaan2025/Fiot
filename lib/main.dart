@@ -20,6 +20,10 @@ autoLogin() async {
 
   SharedPreferences pref = await SharedPreferences.getInstance();
   var mobilno = pref.getString(Helper.mobile);
+  var userIDValue = pref.getString(Helper.userIDValue);
+  print("MOBILE NO ==========  > $mobilno");
+
+  print("UserID autolog-->${userIDValue}");
   if(mobilno==null){
     AppId.initialRoute = AppId.LoginID;
   }else{
@@ -27,6 +31,12 @@ autoLogin() async {
    // Dashboard().createState().mqttMac();
     print("flow end");
 
+      if(Helper.userIDValue=="")
+      {
+        Helper.userIDValue= userIDValue.toString();
+      }
+
+    print("UserID autolog 2 -->${Helper.userIDValue}");
     AppId.initialRoute = AppId.DashboardID;
   }
   runApp(const ProviderScope(child: AppTheme()));

@@ -17,7 +17,7 @@ import '../../res/id.dart';
 import '../edgedevice/add_edgedevice.dart';
 
 class BottomBar extends StatefulWidget {
-  const BottomBar({Key? key}) : super(key: key);
+  const    BottomBar({Key? key}) : super(key: key);
 
   @override
   _BottomBarState createState() => _BottomBarState();
@@ -27,6 +27,8 @@ class _BottomBarState extends State<BottomBar> {
   String _scanBarcode = 'Unknown';
 
   bool goBack = true;
+
+
 
   Future<String> scanQR() async {
     String barcodeScanRes = '';
@@ -47,8 +49,12 @@ class _BottomBarState extends State<BottomBar> {
 
   @override
   Widget build(BuildContext context) {
+
     return Consumer(builder: (context, ref, child) {
-      final currentIndex = ref.watch(navNotifier);
+      var currentIndex = ref.watch(navNotifier);
+      if(Helper.logout == false){
+        currentIndex =0;
+      }
       return Stack(
         children: [
           Container(
@@ -81,6 +87,7 @@ class _BottomBarState extends State<BottomBar> {
                               ref.read(userDataNotifier(Helper.userIDValue));
                               ref.refresh(userDataNotifier(Helper.userIDValue));
                               ref.read(navNotifier.notifier).currentIndex(0);
+                              ref.refresh(navNotifier);
                             },
                             icon: Icon(
                               Icons.home_rounded,
@@ -96,6 +103,11 @@ class _BottomBarState extends State<BottomBar> {
                               ref.read(userDataNotifier(Helper.userIDValue));
                               ref.refresh(userDataNotifier(Helper.userIDValue));
                               ref.read(navNotifier.notifier).currentIndex(1);
+                              if(Helper.logout == false){
+                                Helper.logout = true;
+                              }
+
+
                             },
                             icon: Icon(
                               Icons.search,
@@ -155,6 +167,11 @@ class _BottomBarState extends State<BottomBar> {
                               //Helper.qrScan = false;
                               ref.read(navNotifier.notifier).currentIndex(2);
                               ref.read(userDataNotifier(Helper.userIDValue));
+                              if(Helper.logout == false){
+                                Helper.logout = true;
+                              }
+
+
                             },
                             icon: Icon(
                               Icons.list_alt,
@@ -171,6 +188,10 @@ class _BottomBarState extends State<BottomBar> {
                               ref.read(userDataNotifier(Helper.userIDValue));
                               ref.refresh(userDataNotifier(Helper.userIDValue));
                               ref.read(navNotifier.notifier).currentIndex(3);
+                              if(Helper.logout == false){
+                                Helper.logout = true;
+                              }
+
                             },
                             icon: Icon(
                               Icons.location_on,
@@ -183,7 +204,14 @@ class _BottomBarState extends State<BottomBar> {
                         Expanded(
                           child: IconButton(
                             onPressed: () {
+                              ref.read(userDataNotifier(Helper.userIDValue));
+                              ref.refresh(userDataNotifier(Helper.userIDValue));
                               ref.read(navNotifier.notifier).currentIndex(4);
+                              if(Helper.logout == false){
+                                Helper.logout = true;
+                              }
+
+
                             },
                             icon: Icon(
                               Icons.person,

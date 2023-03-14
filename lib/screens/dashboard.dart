@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-
+import 'dart:math' as math;
 import 'package:bloc/bloc.dart';
-
+import 'package:circle_card/circle_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
@@ -18,13 +18,16 @@ import 'package:generic_iot_sensor/model/user_devicess/user_devies_model.dart';
 import 'package:generic_iot_sensor/provider/edgedevice_provider/addedgedevice_provider.dart';
 import 'package:generic_iot_sensor/repository/channelRepository/channel_repository.dart';
 import 'package:generic_iot_sensor/res/id.dart';
+import 'package:generic_iot_sensor/screens/dashboard_main.dart';
 import 'package:generic_iot_sensor/screens/shimmerprojectlist.dart';
+import 'package:sqflite/sqflite.dart';
 import 'package:toggle_switch/toggle_switch.dart';
 
 
 import '../BLoC/ambientTemp/Bloc_event.dart';
 import '../BLoC/ambientTemp/weatherBloc.dart';
 import '../BLoC/channel/channelBloc_event.dart';
+import '../customPainterClass.dart';
 import '../helper/applicationhelper.dart';
 import '../helper/helper.dart';
 
@@ -42,14 +45,15 @@ import '../repository/geolocation/geolocation_repository.dart';
 import '../res/colors.dart';
 import '../res/screensize.dart';
 import '../services/apiservices.dart';
+import '../sqflite/sqDatabase.dart';
+import 'about.dart';
 import 'edge_device_sensor_list.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
-
+import 'package:lite_rolling_switch/lite_rolling_switch.dart';
 import 'location_list_devices.dart';
 import 'package:intl/intl.dart';
-
-
+import 'package:auto_reload/auto_reload.dart';
 //Provider<Dashboard> apiProvider = Provider<Dashboard>((ref) => Dashboard());
 
 
@@ -83,7 +87,7 @@ class _DashboardState extends ConsumerState<Dashboard> {
   var permissionLocation = false,
       permissionStorage = false;
   bool? isActiveLocation = true;
-  TextEditingController _locationnamecontroller = TextEditingController();
+   TextEditingController _locationnamecontroller = TextEditingController();
   TextEditingController _edittextcontroller = TextEditingController();
   String userName = "test",
       emailAddress = "test";
@@ -96,17 +100,41 @@ class _DashboardState extends ConsumerState<Dashboard> {
   Duration myDuration = const Duration(seconds: 20);
   bool ChangedToggle = false;
 
+bool isShow = true;
+bool isEye = true;
+bool positive = true;
+  final isSelected = <bool>[false, false];
+
+int value = 0;
 
   @override
   void initState() {
 
     print("user" + Helper.userIDValue);
+
     initializeMQTTClient();
 
+    DBase().initializedDB();
 
+      Helper.classes = "Dashboard";
 
-   // connect();
+    if(Helper.classes == "Dashboard")
+    {
+      Timer.periodic(const Duration(seconds: 10), (timer) {
+        WidgetsBinding.instance.addPostFrameCallback((timer) async {
+          ref
+              .read(statusToggleButton
+              .notifier)
+              .state =
+          !ref.watch(
+              statusToggleButton);
+          print("Refreshing...");
+        });
+      });
+    }
+
     super.initState();
+
 
   }
 
@@ -120,11 +148,10 @@ class _DashboardState extends ConsumerState<Dashboard> {
   DateTime dateTime = DateTime.now();
   bool showDate = false;
   bool showTime = false;
-
   var currentDate = "";
-
   bool THAP = false;
   bool SINGLETHREE = false;
+  List<String> numbers = ["1","2","3"];
 
 
   //select for date
@@ -182,6 +209,9 @@ class _DashboardState extends ConsumerState<Dashboard> {
   Map<String, dynamic> tempMap = {};
   Map<String, dynamic> mainMap = {};
 
+  var Name;
+  var MobileNo;
+
 
   String? edgeDeviceName = '',
       mac = '',
@@ -198,12 +228,18 @@ class _DashboardState extends ConsumerState<Dashboard> {
       "a1i25lg7rvcymv-ats.iot.us-east-1.amazonaws.com", "");
   TextEditingController uniqueIdController = TextEditingController();
 
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   var Mqtt = "";
   int onceMqtt = 0;
 
 
   @override
   Widget build(BuildContext context) {
+
+
+    print("westblue");
+   // ref.refresh(userDataNotifier(Helper.userIDValue));
     return MultiRepositoryProvider(
         providers: [
           RepositoryProvider<GeoLocationRepository>(
@@ -234,10 +270,142 @@ class _DashboardState extends ConsumerState<Dashboard> {
             ],
             child: SafeArea(
                 child: Scaffold(
+                  drawer:  SizedBox(
+                    width: 200,
+                    child: Drawer(
+                      child: ListView(
+                        // Important: Remove any padding from the ListView.
+                        padding: EdgeInsets.zero,
+                        children: [
+                           SizedBox(
+                             height: 100,
+                             child: DrawerHeader(
+                              decoration: const BoxDecoration(
+                                color: Color(0xfffE2F3FD)
+                              ),
+                              child: Column(
+                                children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    CircleAvatar(
+                                      backgroundColor: Colors.white,
+                                      radius: 30,
+                                      child: Text(Name.toString().substring(0,1).toUpperCase()),
+                                    ),
+                                    Text("${Name.toString().toUpperCase()}\n${"+"+MobileNo.toString()}")
+                                  ],
+                                ),
+                                ],
+                              )
+                          ),
+                           ),
+                          ListTile(
+                            trailing: const Icon(Icons.home),
+                            title: const Text('HOME',style: TextStyle(
+                              fontSize: 12
+                            ),),
+                            onTap: () {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) =>  DashBoardScreen()));
+                            },
+                          ),
+                          ListTile(
+                            trailing: const Icon(Icons.device_hub),
+                            title: const Text('EML CONFIG',style: TextStyle(
+                                fontSize: 12
+                            ),),
+                            onTap: () {
+                              // Update the state of the app.
+                              // ...
+                            },
+                          ),
+                          ListTile(
+                            trailing: const Icon(Icons.notifications_active),
+                            title: const Text('NOTIFICATIONS',style: TextStyle(
+                                fontSize: 12
+                            ),),
+                            onTap: () {
+                              // Update the state of the app.
+                              // ...
+                            },
+                          ),
+                          ListTile(
+                            trailing: const Icon(Icons.event),
+                            title: const Text('EVENTS',style: TextStyle(
+                                fontSize: 12
+                            ),),
+                            onTap: () {
+                              // Update the state of the app.
+                              // ...
+                            },
+                          ),
+                          ListTile(
+                            trailing: Icon(Icons.details),
+                            title: const Text('ABOUT',style: TextStyle(
+                                fontSize: 12
+                            ),),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) =>  AboutApp()),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                    key: _scaffoldKey,
                     resizeToAvoidBottomInset: false,
                     backgroundColor: AppColors.white,
                     body: ref.watch(userDataNotifier(Helper.userIDValue)).when(
                         data: (data) {
+                          if(data.data == null){
+                            return null;
+                              /*Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: const [
+                                        CircularProgressIndicator()
+                                      ],
+                                    ),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: const [
+                                        Text("No data found"),
+
+
+                                      ],
+                                    ),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: const [
+
+                                        Text("Please check your network"),
+
+                                      ],
+                                    )
+                                  ],
+                                ),
+                              );*/
+                          }
+
+
+                          print("User====>${Helper.userIDValue}");
+
+                          print("DATA==============> ${data.data}");
+
+                          Name = data.data!.userName;
+                          MobileNo = data.data!.mobileNo;
+
+
+
                           // connect();
                           print(
                               "IN DASHBOARD ====== >${Helper.location.length}");
@@ -256,7 +424,10 @@ class _DashboardState extends ConsumerState<Dashboard> {
                           // Helper.mUnit.clear();
                           edDevice.clear();
                           edDeviceList!.clear();
+
                           if (data.data != null) {
+
+                            //  DBase().insertPlanets(data.data!);
                             Helper.profileUserName = data.data!.userName!;
                             Helper.profileMobileNo = data.data!.mobileNo!;
                             Helper.profilePassword = data.data!.password!;
@@ -278,17 +449,23 @@ class _DashboardState extends ConsumerState<Dashboard> {
                             Helper.mUnit = data.data!.units!;
 
                           }
-                          return /*data.data == null ? CircularProgressIndicator() :*/ SingleChildScrollView(
+
+                         if(Helper.classes == "Dashboard")
+                           {
+                             ref.refresh(userDataNotifier(Helper.userIDValue));
+                           }
+                          return data.data == null ? const Center(
+                              child: CircularProgressIndicator()
+                          ):SingleChildScrollView(
                             child: Padding(
                               padding: const EdgeInsets.all(12.0),
                               child: Column(
                                 children: [
                                   Row(
-                                    mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
-                                        'Hello,${data.data!.userName!} !',
+                                        'Hello,${data.data!.userName!.toUpperCase()} !',
                                         style: TextStyle(
                                             fontWeight: FontWeight.bold,
                                             fontSize:
@@ -298,7 +475,7 @@ class _DashboardState extends ConsumerState<Dashboard> {
                                                 .width *
                                                 0.05),
                                       ),
-                                    /*  Padding(
+                                      /*  Padding(
                                         padding: const EdgeInsets.only(left: 20),
                                         child: SizedBox(
                                           width: 150,
@@ -329,9 +506,8 @@ class _DashboardState extends ConsumerState<Dashboard> {
                                             builder: (context, ref, child) {
                                               return Expanded(
                                                 child: SizedBox(
-                                                  height:
-                                                  ScreenSize.screenHeight *
-                                                      0.26,
+                                                  height:150,
+
                                                   child: Card(
                                                     shape: RoundedRectangleBorder(
                                                         borderRadius:
@@ -353,13 +529,13 @@ class _DashboardState extends ConsumerState<Dashboard> {
                                                                     .circular(
                                                                     50.0),
                                                                 color:
-                                                                Color(
+                                                                const Color(
                                                                     0xfffE2F3FD)),
                                                           ),
                                                           Positioned(
                                                               width: 100,
                                                               height: 100,
-                                                              bottom: 80,
+                                                              bottom: 30,
                                                               right: 20,
                                                               child: Image(
 
@@ -375,14 +551,14 @@ class _DashboardState extends ConsumerState<Dashboard> {
 
 
                                                           const Positioned(
-                                                              bottom: 150,
+                                                              bottom: 100,
                                                               left: 40,
                                                               child: Icon(
                                                                   Icons
                                                                       .location_on)),
                                                           // This Holds the Widgets Inside the the custom Container;
                                                           Positioned(
-                                                              bottom: 150,
+                                                              bottom: 100,
                                                               left: 70,
                                                               child: BlocBuilder<
                                                                   GeolocatioBloc,
@@ -420,7 +596,7 @@ class _DashboardState extends ConsumerState<Dashboard> {
                                                                   })),
 
                                                           Positioned(
-                                                              bottom: 60,
+                                                              bottom: 10,
                                                               left: 50,
                                                               child: BlocBuilder<
                                                                   weatherBloc,
@@ -430,11 +606,14 @@ class _DashboardState extends ConsumerState<Dashboard> {
                                                                       state) {
                                                                     if (state
                                                                     is weatherLoading) {
-                                                                      return CircularProgressIndicator();
+                                                                      return SizedBox(
+                                                                        width:100,
+                                                                        height:50,
+                                                                        child: Image.asset("assets/images/thermometer-unscreen.gif"),
+                                                                      );
                                                                     } else
                                                                     if (state
                                                                     is weatherLoaded) {
-
                                                                       return Text(
                                                                         state
                                                                             .myLocationModel
@@ -455,12 +634,12 @@ class _DashboardState extends ConsumerState<Dashboard> {
                                                                     return const CircularProgressIndicator();
                                                                   })),
                                                           const Positioned(
-                                                              bottom: 100,
+                                                              bottom: 50,
                                                               left: 130,
                                                               child: Text(
                                                                   "\u{00B0}C")),
 
-                                                          Positioned(
+                                                          /*   Positioned(
                                                               bottom: 20,
                                                               right: 30,
                                                               child: Text(
@@ -484,7 +663,7 @@ class _DashboardState extends ConsumerState<Dashboard> {
                                                               left: 50,
                                                               child: Text(
                                                                   getTime(
-                                                                      _selectedTime))),
+                                                                      _selectedTime))),*/
                                                           /*       Positioned(
                                                               child: BlocBuilder<ChannelBloc,channelState>(builder: (context,state){
                                                             if(state is channelLoading){
@@ -506,6 +685,28 @@ class _DashboardState extends ConsumerState<Dashboard> {
                                       ],
                                     ),
                                   ),
+                               /* Row(
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Text("DEVICES",style: TextStyle(fontWeight: FontWeight.bold),),
+                                    ),
+                                  ],
+                                ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 8.0),
+                                    child: SizedBox(
+                                      height: 110,
+                                      child: ListView.builder(
+                                        shrinkWrap: true,
+                                        itemCount: edDevice.length ,
+                                        scrollDirection: Axis.horizontal,
+                                        itemBuilder: (context, index) {
+                                          return itemBuildEdgeDevice(index,edDevice[index]);
+                                        },
+                                      ),
+                                    ),
+                                  ),*/
                                   Padding(
                                     padding: const EdgeInsets.only(top: 5.0),
                                     child: ListView.builder(
@@ -562,8 +763,6 @@ class _DashboardState extends ConsumerState<Dashboard> {
     connect(MqttTopicList!);
   }
 
-
-// inside card contain value
   itemBuilderEdgeDevice(int index, UserEdDevice edDevice,) {
     TextEditingController _labelController = TextEditingController(
         text: edDevice.name.toString());
@@ -592,218 +791,314 @@ class _DashboardState extends ConsumerState<Dashboard> {
     }
 
 
-    //   print(newList[i].edMac);
-    //   i++;
-    // }
-
-    // ListEdMac ss1 = new ListEdMac();
-    // ss1.edMac=edDevice.macId!.toUpperCase();
-    // ss1.channel1=false;
-    // ss1.channel2=false;
-    // ss1.channel3=false;
-    //
-    // newList1.add(ss1);
-
     return Visibility(
-        visible: edDevice.isactive != null ? true : false,
+        visible: edDevice.isactive != null && isShow == true ? true : false,
         child: InkWell(
-      onTap: () {
-        var Listed1 = newList.indexWhere((ListEdMac) =>
-        ListEdMac.edMac == edDevice.macId.toString());
-        ref.refresh(liveDataNotifier.notifier);
+          onTap: () {
+            var Listed1 = newList.indexWhere((ListEdMac) =>
+            ListEdMac.edMac == edDevice.macId.toString());
+            ref.refresh(liveDataNotifier.notifier);
 
 
-        ref.read(liveDataNotifier.notifier).getLiveData({
-          "JSON_ID": "12",
-          "USER_ID": Helper.userIDValue,
-          "DATA": {
-            "MAC_ID": edDevice.macId!.toUpperCase(),
-            "SERIAL_NO": edDevice.serialNo,
-            "EDGE_DEVICE_ID": edDevice.edgeDeviceId
-          }
-        });
+            ref.read(liveDataNotifier.notifier).getLiveData({
+              "JSON_ID": "12",
+              "USER_ID": Helper.userIDValue,
+              "DATA": {
+                "MAC_ID": edDevice.macId!.toUpperCase(),
+                "SERIAL_NO": edDevice.serialNo,
+                "EDGE_DEVICE_ID": edDevice.edgeDeviceId
+              }
+            });
 
 
-        if (edDevice.edgeDeviceId != "9" && edDevice.edgeDeviceId != "10") {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => EdgeDeviceSensorList(edDevice: edDevice)),
-          );
-        }
-      },
-      child: Column(
-        children: [
-          SizedBox(
-            child: Card(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20)),
-              elevation: 25,
-              child: Column(
+            if (edDevice.edgeDeviceId != "9" && edDevice.edgeDeviceId != "10" && edDevice.edgeDeviceId != "11") {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => EdgeDeviceSensorList(edDevice: edDevice)),
+              );
+            }
+          },
+          child: Column(
+            children: [
+              SizedBox(
+                child: Card(
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20)),
+                  elevation: 25,
+                  child: Column(
 
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.only(left: 20, top: 10),
-                        child: Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                              color: diff.inMinutes > -10
-                                  ? Colors.green
-                                  : Colors.red,
-                              shape: BoxShape.circle),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 20, top: 10),
-                        child: Text("Date : ${edDevice.sensors![0].date
-                            .toString()} ", style: TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold
-                        ),),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(top: 10),
-                        child: Text(" , ${edDevice.sensors![0].time
-                            .toString()}", style: TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold
-
-                        ),),
-                      )
-                    ],),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(left: 20),
-                        child: Text(
-                          edDevice.sensorUnit.toString(),
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-
-                      Text(newList[Listed1].Name,
-                          style: TextStyle(fontWeight: FontWeight.bold)),
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
+                        mainAxisAlignment: MainAxisAlignment.start,
                         children: [
-                          IconButton(onPressed: () {
-                            setEditPopup(edDevice);
-                          }, icon: Icon(Icons.edit, color: AppColors.secondary,
-                            size: ScreenSize.screenWidth * 0.05,)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 20, top: 10),
+                            child: Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                  color:  diff.inMinutes > -6 && edDevice.sensors![0].date!.isNotEmpty
+                                    ? Colors.green
+                                        : Colors.red,
+
+                                  shape: BoxShape.circle),
+                            ),
                           ),
+                          Padding(
+                            padding: const EdgeInsets.only(left: 20, top: 10),
+                            child: Text("Date : ${edDevice.sensors![0].date
+                                .toString()} ", style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold
+                            ),),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 10),
+                            child: Text(" , ${edDevice.sensors![0].time
+                                .toString()}", style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold
+
+                            ),),
+                          )
+                        ],),
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(left: 20),
+                            child: Text(
+                              edDevice.sensorUnit.toString(),
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+
+                          Text(newList[Listed1].Name,
+                              style: TextStyle(fontWeight: FontWeight.bold)),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              IconButton(onPressed: () {
+                                setEditPopup(edDevice);
+                              }, icon: Icon(Icons.edit, color: AppColors.secondary,
+                                size: ScreenSize.screenWidth * 0.05,)
+                              ),
+
+                            ],
+                          )
 
                         ],
-                      )
+                      ),
 
+                      const SizedBox(
+                        child: Divider(
+                          color: Colors.black,
+                          indent: 10,
+                          endIndent: 10,
+                        ),
+                      ),
+
+                     edDevice.edgeDeviceId == "10" || edDevice.edgeDeviceId == "7" ?  Padding(
+                       padding: edDevice.edgeDeviceId == "10" ?  const EdgeInsets.only(left: 35,top: 5):  const EdgeInsets.only(right: 15),
+                       child:  GridView.builder(
+                         physics: ScrollPhysics(),
+
+                         shrinkWrap: true,
+                         itemCount: 3,
+                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3), itemBuilder:(context, index) {
+                         print(index.toString());
+                         return Column(
+                           children: [
+                             Visibility(
+                               visible: edDevice.sensors![index].parameters! ==
+                                   'Motion Detection' ||
+                                   edDevice.sensors![index].parameters! ==
+                                       'Light Status'
+                                   ? false
+                                   : true,
+                               child: Column(
+                                 children: [
+                                   Row(
+                                     mainAxisAlignment: MainAxisAlignment
+                                         .spaceAround,
+                                     children: [
+                                      /* Expanded(
+                                           flex: 6,
+                                           child: Padding(
+                                             padding: const EdgeInsets.only(
+                                                 left: 10.0),
+                                             child: Text(
+                                               "${edDevice.sensors![index]
+                                                   .parameters}   : ",
+                                               textAlign: TextAlign.left,
+                                               style: const TextStyle(
+                                                   fontWeight: FontWeight.bold),
+                                             ),
+                                           )),*/
+                                      /* edDevice.edgeDeviceId == "9"
+                                           ? getDataForDevices(edDevice, index)
+                                           : edDevice.edgeDeviceId == "10"
+                                           ? getDataForDevices(edDevice, index)
+                                           : Padding(
+                                         padding: const EdgeInsets.only(
+                                             right: 10.0),
+                                         child: edDevice.edgeDeviceId == "7" ? Row(
+                                           children: [
+                                             Text(
+                                               edDevice.sensors![index].liveData
+                                                   .toString(),
+                                               textAlign: TextAlign.right,
+                                             ),
+                                           ],
+                                         ):Text(
+                                           edDevice.sensors![index].liveData
+                                               .toString(),
+                                           textAlign: TextAlign.right,
+                                         ),
+                                       ),*/
+                                       Expanded(
+                                           flex: 2,
+                                           child: Padding(
+                                             padding: const EdgeInsets.only(
+                                                 left: 10.0),
+                                             child: edDevice.edgeDeviceId == "7" ? SizedBox(
+                                               width: 15,
+                                               height: 47,
+                                               child: Image.network(edDevice.sensors![index].image!),
+                                             ):Text(
+                                               edDevice.sensors![index].units
+                                                   .toString(),
+                                               textAlign: TextAlign.left,
+                                               style: const TextStyle(
+                                                   color: Colors.redAccent),
+                                             ),
+                                           )),
+
+                                     ],
+                                   ),
+                                  edDevice.edgeDeviceId == "7" ? Padding(
+                                     padding: const EdgeInsets.only(left: 10),
+                                     child: Text(
+                                       edDevice.sensors![index].liveData
+                                           .toString(),
+                                       textAlign: TextAlign.right,
+                                     ),
+                                   ):getDataForDevices(edDevice, index),
+                                  edDevice.edgeDeviceId == "10" ? Padding(
+                                    padding: const EdgeInsets.only(left: 20),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Row(children: [
+                                         Text(numbers[index],style: TextStyle(fontSize: 12),)
+                                       ],),
+                                    ),
+                                  ):Text("")
+                                 ],
+                               ),
+                             )
+                           ],
+                         );
+                       }, )
+                     ) : Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child:  ListView.builder(
+                          physics: ScrollPhysics(),
+                          shrinkWrap: true,
+                          scrollDirection: Axis.vertical,
+                          itemCount: edDevice.sensors!.length,
+                          itemBuilder: (context, index) {
+                            print(index.toString());
+                            return Padding(
+                              padding: const EdgeInsets.all(5.0),
+                              child:  Column(
+                                children: [
+                                  Visibility(
+                                    visible: edDevice.sensors![index].parameters! ==
+                                        'Motion Detection' ||
+                                        edDevice.sensors![index].parameters! ==
+                                            'Light Status'
+                                        ? false
+                                        : true,
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment
+                                          .spaceAround,
+                                      children: [
+                                        Expanded(
+                                            flex: 6,
+                                            child: Padding(
+                                              padding: const EdgeInsets.only(
+                                                  left: 10.0),
+                                              child: Text(
+                                                "${edDevice.sensors![index]
+                                                    .parameters}   : ",
+                                                textAlign: TextAlign.left,
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                    fontWeight: FontWeight.bold),
+                                              ),
+                                            )),
+                                        edDevice.edgeDeviceId == "9"
+                                            ? getDataForDevices(edDevice, index)
+                                            : edDevice.edgeDeviceId == "10"
+                                            ? getDataForDevices(edDevice, index)
+                                            : Padding(
+                                          padding: const EdgeInsets.only(
+                                              right: 10.0),
+                                          child: Text(
+                                            edDevice.sensors![index].liveData
+                                                .toString(),
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                            ),
+                                            textAlign: TextAlign.right,
+
+                                          ),
+                                        ),
+                                        Expanded(
+                                            flex: 2,
+                                            child: Padding(
+                                              padding: const EdgeInsets.only(
+                                                  left: 10.0),
+                                              child: edDevice.edgeDeviceId == "7" ? SizedBox(
+                                                child: Image.network(edDevice.sensors![index].image!),
+                                              ):Text(
+                                                edDevice.sensors![index].units
+                                                    .toString(),
+                                                textAlign: TextAlign.left,
+                                                style: const TextStyle(
+                                                    color: Colors.redAccent),
+                                              ),
+                                            )),
+                                      ],
+                                    ),
+                                  )
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
                     ],
                   ),
-
-                  const SizedBox(
-                    child: Divider(
-                      color: Colors.black,
-                      indent: 10,
-                      endIndent: 10,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: ListView.builder(
-                      physics: ScrollPhysics(),
-                      shrinkWrap: true,
-                      scrollDirection: Axis.vertical,
-                      itemCount: edDevice.sensors!.length,
-                      itemBuilder: (context, index) {
-                        print(index.toString());
-                        return Padding(
-                          padding: const EdgeInsets.all(5.0),
-                          child: Column(
-                            children: [
-                              Visibility(
-                                visible: edDevice.sensors![index].parameters! ==
-                                    'Motion Detection' ||
-                                    edDevice.sensors![index].parameters! ==
-                                        'Light Status'
-                                    ? false
-                                    : true,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment
-                                      .spaceAround,
-                                  children: [
-                                    Expanded(
-                                        flex: 6,
-                                        child: Padding(
-                                          padding: const EdgeInsets.only(
-                                              left: 10.0),
-                                          child: Text(
-                                            "${edDevice.sensors![index]
-                                                .parameters}   : ",
-                                            textAlign: TextAlign.left,
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                        )),
-                                    edDevice.edgeDeviceId == "9"
-                                        ? getDataForDevices(edDevice, index)
-                                        : edDevice.edgeDeviceId == "10"
-                                        ? getDataForDevices(edDevice, index)
-                                        : Expanded(
-                                      flex: 3,
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(
-                                            right: 10.0),
-                                        child: Text(
-                                          edDevice.sensors![index].liveData
-                                              .toString(),
-                                          textAlign: TextAlign.right,
-
-                                        ),
-                                      ),
-                                    ),
-                                    Expanded(
-                                        flex: 2,
-                                        child: Padding(
-                                          padding: const EdgeInsets.only(
-                                              left: 10.0),
-                                          child: Text(
-                                            edDevice.sensors![index].units
-                                                .toString(),
-                                            textAlign: TextAlign.left,
-                                            style: const TextStyle(
-                                                color: Colors.redAccent),
-                                          ),
-                                        )),
-                                  ],
-                                ),
-                              )
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-          ),
-          /*  Padding(
+              /*  Padding(
             padding: const EdgeInsets.only(top: 10.0, bottom: 10),
             child: Text(
               edDevice.sensorUnit.toString(),
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ),*/
-        ],
-      ),
-    ));
+            ],
+          ),
+        ));
   }
 
   getDataForDevices(UserEdDevice edDevice, int index) {
+
+
     return Consumer(builder: (context, ref, child) {
       var Listed = newList.firstWhere((ListEdMac) =>
       ListEdMac.edMac == edDevice.macId.toString());
@@ -848,7 +1143,7 @@ class _DashboardState extends ConsumerState<Dashboard> {
           error: (e, s) {},
           loading: () {});
       return Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: edDevice.edgeDeviceId == "10" ? const EdgeInsets.only(right: 28): EdgeInsets.only(left: 0,),
         child: Container(
           decoration: BoxDecoration(
             color: Colors.white,
@@ -940,7 +1235,7 @@ class _DashboardState extends ConsumerState<Dashboard> {
                     ref
                         .read(statusToggleButton
                         .notifier)
-                        .state =
+                         .state =
                     !ref.watch(
                         statusToggleButton);
 
@@ -1129,7 +1424,7 @@ class _DashboardState extends ConsumerState<Dashboard> {
       for (var ed in unit.edDevice!) {
         if (ed.locationId == location.locationId) {
 
-           edDeviceList!.add(ed);
+          edDeviceList!.add(ed);
 
         } else {
           // edDeviceList!.remove(ed);
@@ -1140,69 +1435,70 @@ class _DashboardState extends ConsumerState<Dashboard> {
     return Visibility(
         visible: location.isactive != null ? true : false,
         child: Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(2.0),
-          child: InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) =>
-                        LocationListDevices(location: location, list: list)),
-              );
-            },
-            child: Padding(
-              padding: const EdgeInsets.all(5.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(2.0),
+              child: InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            LocationListDevices(location: location, list: list)),
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(5.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      Text(location.locationName.toString(),
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
-                      SizedBox(
-                          width: 30,
-                          height: 30,
-                          child: Image(
-                              image: AssetImage(location.locationName
-                                  .toString()
-                                  .contains('office')
-                                  ? "assets/images/office-building.png"
-                                  : "assets/images/house.png"))),
-                    ],
-                  ),
-                  Padding(
-                      padding: const EdgeInsets.only(top: 10.0),
-                      child: SizedBox(
-                        width: MediaQuery
-                            .of(context)
-                            .size
-                            .width,
-                        child: ListView.builder(
-                            shrinkWrap: true,
-                            physics: ScrollPhysics(),
-                            //itemCount: edDeviceList.where(x=>)?.length ?? 0,
-                            itemCount: edDeviceList
-                                ?.where((x) =>
-                            x.locationId == location.locationId.toString())
-                                .toList()
-                                .length ?? 0,
-                            scrollDirection: Axis.vertical,
-                            itemBuilder: (context, index) {
-                              print("INDEX  -  $index" + "--" +
-                                  edDeviceList!.where((x) => x.locationId ==
-                                      location.locationId.toString())
-                                      .toList()[index].edgeDeviceId.toString());
-                              return itemBuilderEdgeDevice(
-                                  index,
-                                  edDeviceList!.where((x) => x.locationId ==
-                                      location.locationId.toString())
-                                      .toList()[index]);
-                            }),
-                      )),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(location.locationName.toString(),
+                              style: const TextStyle(fontWeight: FontWeight.bold)),
+
+                          SizedBox(
+                              width: 30,
+                              height: 30,
+                              child: Image(
+                                  image: AssetImage(location.locationName
+                                      .toString()
+                                      .contains('office')
+                                      ? "assets/images/office-building.png"
+                                      : "assets/images/house.png"))),
+                        ],
+                      ),
+                      Padding(
+                          padding: const EdgeInsets.only(top: 10.0),
+                          child: SizedBox(
+                            width: MediaQuery
+                                .of(context)
+                                .size
+                                .width,
+                            child: ListView.builder(
+                                shrinkWrap: true,
+                                physics: ScrollPhysics(),
+                                //itemCount: edDeviceList.where(x=>)?.length ?? 0,
+                                itemCount: edDeviceList
+                                    ?.where((x) =>
+                                x.locationId == location.locationId.toString())
+                                    .toList()
+                                    .length ?? 0,
+                                scrollDirection: Axis.vertical,
+                                itemBuilder: (context, index) {
+                                  print("INDEX  -  $index" + "--" +
+                                      edDeviceList!.where((x) => x.locationId ==
+                                          location.locationId.toString())
+                                          .toList()[index].edgeDeviceId.toString());
+                                  return    itemBuilderEdgeDevice(
+                                      index,
+                                      edDeviceList!.where((x) => x.locationId ==
+                                          location.locationId.toString())
+                                          .toList()[index]);
+                                }),
+                          )),
 /*
                 Visibility(
                     visible: edDevice.sensors![index].parameters! == 'Motion Detection' ? false :true,
@@ -1456,166 +1752,18 @@ class _DashboardState extends ConsumerState<Dashboard> {
                       ],
                     ),
                   ),*/
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
-    ));
-  }
-
-/*mobileUi(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: const Text(
-          'Dashboard',
-        ),
-        backgroundColor: Colors.blue,
-      ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: <Widget>[
-            const UserAccountsDrawerHeader(
-              decoration: BoxDecoration(color: Colors.blue),
-              accountName: Text("RAX IOT SENSOR"),
-              accountEmail: Text(
-                "",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
+                    ],
+                  ),
                 ),
               ),
-              currentAccountPicture: FlutterLogo(),
-            ),
-            ListTile(
-              leading: const Icon(
-                Icons.home,
-              ),
-              title: const Text('Devices'),
-              onTap: () {
-                Navigator.of(context).pushNamedAndRemoveUntil(
-                    AppId.AddEdgeDevice,
-                        (Route<dynamic> route) => false);
-              },
-            ),
-            ListTile(
-              leading: const Icon(
-                Icons.settings,
-              ),
-              title: const Text('Configuration'),
-              onTap: () async {
-                permissionLocation = await Permission.locationWhenInUse.isGranted;
-                permissionStorage = await Permission.storage.isGranted;
-                if(permissionLocation && permissionStorage) {
-
-                  Future.delayed(const Duration(milliseconds: 200), ()
-                    {
-                      Navigator.of(context).pushNamedAndRemoveUntil(
-                          AppId.ConfigurationList,
-                              (Route<dynamic> route) => false);
-                    });
-
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                      content: Text('Please provide the location & storage permission to proceed further')));
-                  requestLocationPermission();
-                }
-              },
-            ),
-            ListTile(
-              leading: const Icon(
-                Icons.person_pin,
-              ),
-              title: const Text('My Profile'),
-              onTap: () {
-                Navigator.of(context).pushNamedAndRemoveUntil(
-                    AppId.MyProfile, (Route<dynamic> route) => false);
-              },
-            ),
-            ListTile(
-              leading: const Icon(
-                Icons.home,
-              ),
-              title: const Text('Location'),
-              onTap: () {
-                Navigator.of(context).pushNamedAndRemoveUntil(
-                    AppId.Location,
-                        (Route<dynamic> route) => false);
-              },
             ),
           ],
-        ),
-      ),
-      body: Center(
-        child: Column(
-          children: const [
-            SizedBox(
-              height: 50,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          scanQR();
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) =>  const AddEdgeDevice()),
-          );
-        },
-        backgroundColor: Colors.blue,
-        child: const Icon(Icons.add),
-      ),
-    );
-  }
-
-  windowsUi(BuildContext context) {}
-  Future<void> requestLocationPermission() async {
-    permissionLocation = await Permission.locationWhenInUse.isGranted;
-    if(!permissionLocation) {
-      final status = await Permission.locationWhenInUse.request();
-      if (status == PermissionStatus.granted) {
-        print('Loc Permission Granted');
-        requestStoragePermission();
-      } else if (status == PermissionStatus.denied) {
-        print('Loc Permission denied');
-      } else if (status == PermissionStatus.permanentlyDenied) {
-        print('Loc Permission Permanently Denied');
-        await openAppSettings();
-      }
-    } else {
-      print('Else Loc Permission Granted');
-      requestStoragePermission();
-    }
+        ));
   }
 
 
-  Future<void> requestStoragePermission() async {
-    permissionStorage = await Permission.storage.isGranted;
-    if(!permissionStorage) {
-      final status = await Permission.storage.request();
-      if (status == PermissionStatus.granted) {
-        print('Storage Permission Granted');
-        Navigator.of(context).pushNamedAndRemoveUntil(
-            AppId.SmartConfigID,
-                (Route<dynamic> route) => false);
-      } else if (status == PermissionStatus.denied) {
-        print('Storage Permission denied');
-      } else if (status == PermissionStatus.permanentlyDenied) {
-        print('Storage Permission Permanently Denied');
-        await openAppSettings();
-      }
-    } else {
-      Navigator.of(context).pushNamedAndRemoveUntil(
-          AppId.SmartConfigID,
-              (Route<dynamic> route) => false);
-      print('Else Storage Permission Granted');
-    }
-  }*/
 
-    locationPopUp() {
+  locationPopUp() {
     return showDialog(
       context: context,
       builder: (ctx) =>
@@ -1845,87 +1993,9 @@ class _DashboardState extends ConsumerState<Dashboard> {
   }
 
 
-/*  _connect()async{
-    isConnected = await connectMqtt();
-    print("Mqtt is connected successfully");
-  }*/
-
-  /* Future<bool> connectMqtt() async {
-    setStatus('Connecting Mqtt Broker');
-    ByteData rootCA = await rootBundle.load("assets/mqtt_certificates/AmazonRootCA1.pem");
-    ByteData deviceCert  = await rootBundle.load("assets/mqtt_certificates/DeviceCertificates.crt");
-    ByteData privateKey  = await rootBundle.load("assets/mqtt_certificates/Private.key");
-
-
-    SecurityContext context = SecurityContext.defaultContext;
-    context.setClientAuthoritiesBytes(rootCA.buffer.asUint8List());
-    context.useCertificateChainBytes(deviceCert.buffer.asUint8List());
-    context.usePrivateKeyBytes(privateKey.buffer.asUint8List());
-
-
-    client.securityContext = context;
-    client.logging(on: true);
-    client.keepAlivePeriod = 20;
-    client.port = 8883;
-    client.onConnected = onConnected;
-    client.onDisconnected = onDisConnected;
-    client.pongCallback = pong;
-
-    final connMess = MqttConnectMessage()
-        .withClientIdentifier('a1i25lg7rvcymv-ats.iot.us-east-1.amazonaws.com')
-        .withWillTopic('test') // If you set this you must set a will message
-        .withWillMessage('surprise!!!')
-        .startClean() // Non persistent session for testing
-        .withWillQos(MqttQos.atLeastOnce);
-    print('EXAMPLE::AWS client connecting....');
-    client.connectionMessage = connMess;
-
-  */ /*  final MqttConnectMessage connectMessage = MqttConnectMessage().withClientIdentifier(uniqueId).startClean();
-    client.connectionMessage = connectMessage;
-*/ /*
-    try {
-      await client.connect();
-    } on NoConnectionException catch (e) {
-      // Raised by the client when connection fails.
-      print('EXAMPLE::client exception - $e');
-      client.disconnect();
-    } on SocketException catch (e) {
-      // Raised by the socket layer
-      print('EXAMPLE::socket exception - $e');
-      client.disconnect();
-    }
-    if(client.connectionStatus!.state == MqttConnectionState.connected){
-      print("Connected to AWS Successfully");
-    }else{
-      print("CONNECTION--------------------- FAILED");
-      return false;
-    }
-
-    const topic = "test";
-    client.subscribe(topic, MqttQos.atLeastOnce);
-
-
-
-    return true;
-  }
-  void setStatus(String content){
-    setState(() {
-      statusText = content;
-    });
-  }
-  void onConnected(){
-    setStatus("Client Connection was success");
-  }
-  void onDisConnected(){
-    setStatus("Client disconnected");
-  }
-  void pong(){
-    setStatus("ping response done");
-
-  }*/
 
   void initializeMQTTClient() async {
-    // _client = MqttServerClient(_host, _identifier);
+    //_client = MqttServerClient(_host, _identifier);
     _client.port = 8883;
     _client.keepAlivePeriod = 20;
     // _client.onDisconnected = onDisconnected;
@@ -1933,7 +2003,7 @@ class _DashboardState extends ConsumerState<Dashboard> {
     _client.logging(on: true);
 
 
-   /* ref.watch(userDataNotifier(Helper.userIDValue)).when(data: (data){
+    /* ref.watch(userDataNotifier(Helper.userIDValue)).when(data: (data){
       print("Data Length===>"+data.data!.units!.length.toString());
       if(data.data!=null)
       {
@@ -2092,10 +2162,224 @@ class _DashboardState extends ConsumerState<Dashboard> {
 
   void mqttMac(UserDeviceList userDeviceList){
     print("UNIT LENGTH ========== ${userDeviceList.data!.units!.length}");
-   if(userDeviceList.data!.units != null){
-     MqttTopics(userDeviceList.data!.units!);
-   }
+    if(userDeviceList.data!.units != null){
+      MqttTopics(userDeviceList.data!.units!);
+    }
 
   }
+
+  itemBuildEdgeDevice(int index, UserEdDevice edDevice) {
+
+    return Visibility(
+      //visible: edDevice.isactive == "1" ? true : false,
+        child: Padding(
+          padding: const EdgeInsets.all(5.0),
+          child: InkWell(
+            onTap: (){
+              ref.refresh(liveDataNotifier.notifier);
+              Future.delayed(Duration(milliseconds: 100),(){ref.read(liveDataNotifier.notifier).getLiveData({
+                "JSON_ID": "12",
+                "USER_ID": Helper.userIDValue,
+                "DATA": {
+                  "MAC_ID": edDevice.macId!.toUpperCase(),
+                  "SERIAL_NO": edDevice.serialNo,
+                  "EDGE_DEVICE_ID": edDevice.edgeId
+                }
+              });
+              });
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) =>  EdgeDeviceSensorList(edDevice : edDevice)),
+              );
+            },
+            child: Column(
+              children: [
+                Expanded(
+                  child: CircleAvatar(
+                    radius: 30.0,
+
+                    backgroundColor:(){
+                      if(edDevice.edgeDeviceId == "1"){
+                        return Colors.blueGrey;
+                      }else if(edDevice.edgeDeviceId == "2"){
+                        return Colors.blue.shade100;
+                      }else if(edDevice.edgeDeviceId == "3"){
+                        return Colors.pinkAccent.shade700;
+                      }else if(edDevice.edgeDeviceId == "4"){
+                        return Colors.amber.shade100;
+                      }else if(edDevice.edgeDeviceId == "5"){
+                        return Colors.redAccent.shade100;
+                      }else if(edDevice.edgeDeviceId == "6"){
+                        return Colors.cyan.shade100;
+                      }else if(edDevice.edgeDeviceId == "7"){
+                        return Color(0xfff1cbff);
+                      }else if(edDevice.edgeDeviceId == "8"){
+                        return Color(0xffffe4e1);
+                      }else if(edDevice.edgeDeviceId == "9"){
+                        return Color(0xffeedd82);
+                      }else if(edDevice.edgeDeviceId == "10"){
+                        return Color(0xffFF7276);
+                      }else if(edDevice.edgeDeviceId == "11"){
+                        return Color(0xffE5FFCC);
+                      }else if(edDevice.edgeDeviceId == "12"){
+                        return Color(0xff99CCFF);
+                      }else
+                      {
+                        return Colors.blueGrey;
+                      }
+                    }(),
+
+                    child:  Padding(
+                      padding: EdgeInsets.all(15.0),
+                      child: SizedBox(
+                          width: 50,
+
+                     height: 60,
+                          child:(){
+                            if(edDevice.edgeDeviceId == "1"){
+                              return  Image(
+                                  image: AssetImage('assets/images/hot.png'));
+                            }else if(edDevice.edgeDeviceId == "2"){
+                              return Image(
+                                  image: AssetImage('assets/images/idea.png'));
+                            }else if(edDevice.edgeDeviceId == "3"){
+                              return  Image(
+                                  image: AssetImage('assets/images/phorp-removebg-preview.png'));
+                            }else if(edDevice.edgeDeviceId == "4"){
+                              return  Image(
+                                  image: AssetImage('assets/images/waterlevelA.png'));
+                            }else if(edDevice.edgeDeviceId == "5"){
+                              return  Image(
+                                  image: AssetImage('assets/images/WLD.png'));
+                            }else if(edDevice.edgeDeviceId == "6"){
+                              return  Image(
+                                  image: AssetImage('assets/images/hot.png'));
+                            }else if(edDevice.edgeDeviceId == "7"){
+                              return  Image(
+                                  image: AssetImage('assets/images/SMILE.png'));
+                            }else if(edDevice.edgeDeviceId == "8"){
+                              return  Image(
+                                  image: AssetImage('assets/images/cardlight.png'));
+                            }else if(edDevice.edgeDeviceId == "9"){
+                              return Center(child: Text("1-C",style: TextStyle(fontWeight: FontWeight.bold),));
+                            }else if(edDevice.edgeDeviceId == "10"){
+                              return   Center(child: Text("3-C",style: TextStyle(fontWeight: FontWeight.bold,color: Colors.black),));
+                            }else if(edDevice.edgeDeviceId == "11"){
+                              return  Center(child: Text("8-C",style: TextStyle(fontWeight: FontWeight.bold),));
+                            }else if(edDevice.edgeDeviceId == "12"){
+                              return Image(
+                              image: AssetImage('assets/images/energy.png'));
+                            }else
+                            {
+                              return  Image(
+                              image: AssetImage('assets/images/hot.png'));
+                            }
+                          }()
+
+
+                             ),
+                    ),
+                  ),
+
+
+                   /* child: const Padding(
+                      padding: EdgeInsets.all(15.0),
+                      child: SizedBox(
+                          width: 20,
+                          height: 10,
+                          child: Image(
+                              image: AssetImage('assets/images/thermometer.png'))),
+                    ),*/
+                  ),
+
+
+                Row(
+                  children: [
+                    Text(edDevice.sensorUnit.toString(),style: const TextStyle(fontSize:10,fontWeight: FontWeight.bold,color: Color(0xff808080)),),
+                   /* IconButton(onPressed: (){
+                      ConfirmPopup(edDevice);
+
+                    }, icon: Icon(Icons.delete)),*/],
+                )
+
+              ],
+            ),
+          ),
+        ));
+  }
+
+  ConfirmPopup( UserEdDevice edDevice){
+    print("confirm");
+
+    showDialog(
+        context: context,
+        builder: (ctx) => SizedBox(
+          height: 20,
+          width: 40,
+
+          child: AlertDialog(
+            title: Text("CONFIRM ??",style: TextStyle(fontSize: 16),),
+            content:
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    tempMap['LOCATION_ID'] = edDevice.locationId;
+                    tempMap['PRODUCT_CODE'] = edDevice.productCode;
+                    tempMap['NAME'] =edDevice.name;
+                    tempMap['MAC_ID'] = edDevice.macId;
+                    tempMap['SERIAL_NO'] = edDevice.serialNo;
+                    tempMap['EDGE_DEVICE_ID'] = edDevice.edgeDeviceId;
+                    mainMap["JSON_ID"] = "09";
+                    mainMap["USER_ID"] = Helper.userIDValue;
+                    mainMap["DATA"] = tempMap;
+                    tempMap["ISACTIVE"] = "0";
+                    ref
+                        .read(apiProvider)
+                        .addEdDevices(mainMap);
+
+                    Future.delayed(
+                      const Duration(milliseconds: 100),
+                          () {
+
+                        ScaffoldMessenger.of(context)
+                            .showSnackBar(SnackBar(content: Text("Deleted Successfully")));
+
+                        Navigator.pop(context);
+                        //ref.read(liveDataNotifier);
+                        ref.refresh(userDataNotifier(Helper.userIDValue));
+                        // ref.read(userDataNotifier(Helper.userIDValue));
+
+
+                      },
+                    );
+
+                  },
+                  child: Text('YES'),
+                ),
+                ElevatedButton(
+
+                  onPressed: () {
+                    Navigator.pop(context);
+                    /* Navigator.of(context).pushNamed(
+                        AppId.Configuration);*/
+                  },
+                  child: Text('NO'),
+                ),
+              ],
+            ),
+
+
+          ),
+        )
+    );
+
+
+
+
+
+  }
+
 
 }

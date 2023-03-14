@@ -15,6 +15,7 @@ class SensorItemScreen extends ConsumerStatefulWidget {
 class _SensorItemScreenState extends ConsumerState<SensorItemScreen> {
   @override
   Widget build(BuildContext context) {
+    print("dbject");
     return SafeArea(child: Scaffold(
       backgroundColor: AppColors.cream,
       body: Padding(

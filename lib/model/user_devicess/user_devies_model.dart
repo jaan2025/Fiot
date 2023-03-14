@@ -37,7 +37,7 @@ class UserData {
   });
 
   String ?id;
-  int? userId;
+  dynamic userId;
   String?userName;
   String?password;
   String?mobileNo;

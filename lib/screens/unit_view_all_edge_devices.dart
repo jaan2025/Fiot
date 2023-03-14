@@ -52,56 +52,79 @@ class _UnitViewAllEdgeDeviceScreenState extends ConsumerState<UnitViewAllEdgeDev
 
       backgroundColor: AppColors.cream,
       body: ref.watch(userDataNotifier(Helper.userIDValue)).when(data: (data){
-   return Padding(
-    padding: const EdgeInsets.all(8.0),
-    child: SingleChildScrollView(
+        return  data.data == null  ? Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  CircularProgressIndicator()
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Text("No data found"),
 
-    child: Column(
-    children: [
-    Padding(
-    padding: const EdgeInsets.only(bottom: 10.0),
-    child: Row(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: [
-    /*IconButton(
-                      onPressed: () {
-                       Navigator.push(context, MaterialPageRoute(builder: (context)=>DashBoardScreen()));
-                      },
-                      icon: const Icon(
-                        Icons.arrow_back_ios_sharp,
-                        color: Colors.black,
-                      )),*/
-    Text(
-    'Edge Devices List',
-    style: TextStyle(
-    fontWeight: FontWeight.bold,
-    fontSize:
-    MediaQuery.of(context).size.width *
-    0.05),
-    )
-    ],
-    ),
-    ),
-    SingleChildScrollView(
-    child: Padding(
-    padding: const EdgeInsets.all(5.0),
-    child: ListView.builder(
-    physics: ScrollPhysics(),
-    itemCount: data.data!.units!.length,
-    shrinkWrap: true,
-    scrollDirection: Axis.vertical,
-    itemBuilder: (context, index) {
-    return itemBuilderUnitList(data.data!.units![index],index);
-    },),
-    ),
-    )
-    ],
-    ),
-    ),
-    );
-    }, error: (error,e){}, loading: (){}
-    )
-    ));
+
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+
+                  Text("Please check your network"),
+
+                ],
+              )
+            ],
+          ),
+        ) : Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: SingleChildScrollView(
+
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                     data.data!.units!.isNotEmpty ?
+                      Text(
+                        'Edge Devices List',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize:
+                        MediaQuery.of(context).size.width * 0.05),
+                      ):  Text(
+                       'Please add the Edgedevices!',
+                       style: TextStyle(fontWeight: FontWeight.bold, fontSize:
+                       MediaQuery.of(context).size.width * 0.05),
+                     )
+                    ],
+                  ),
+                ),
+                SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(5.0),
+                    child: ListView.builder(
+                      physics: ScrollPhysics(),
+                      itemCount: data.data!.units!.length,
+                      shrinkWrap: true,
+                      scrollDirection: Axis.vertical,
+                      itemBuilder: (context, index) {
+                        return itemBuilderUnitList(data.data!.units![index],index);
+                        },),
+                  ),
+                )
+              ],
+            ),
+          ),
+        );
+        }, error: (error,e){}, loading: (){}
+      )
+        ));
   }
 
   itemBuilderEdgeDevice(int index, UserEdDevice edDevice) {
